@@ -26,7 +26,7 @@ SRCS=\
 	$(SRCDIR)/EmperorSystem.cpp \
 	$(SRCDIR)/SecondLife.cpp
 
-OBJS=$(SRCS:.cpp=.o)
+OBJS=$(addprefix $(OBJDIR)/, $(SRCS:.cpp=.o))
 LIBS=-lm
 
 CFLAGS=-g -Wall
@@ -34,14 +34,14 @@ LFLAGS=$(LIBS)
 
 all: directories populate $(TARGET)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $^ -o $(OBJDIR)/$@
+$(OBJDIR)/%.o: %.c
+	$(CC) $(CFLAGS) -c $^ -o $@
 
-%.o: %.cpp
-	$(CC) $(CFLAGS) -c $^ -o $(OBJDIR)/$@
+$(OBJDIR)/%.o: %.cpp
+	$(CC) $(CFLAGS) -c $^ -o $@
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $(LFLAGS) -o $(BINDIR)/$@ $(OBJDIR)/$^
+	$(CC) $(CFLAGS) $(LFLAGS) -o $(BINDIR)/$@ $^
 
 directories: 
 	$(MKDIR_P) $(OUTDIR)
