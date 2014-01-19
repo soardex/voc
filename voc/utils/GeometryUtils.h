@@ -8,6 +8,9 @@ class CGeometryUtils
 public:
     CGeometryUtils *inst();
     ~CGeometryUtils();
+
+protected:
+    CGeometryUtils();
 };
 
 #endif /* end of include guard: _GEOMETRY_UTILS_H_ */

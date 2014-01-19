@@ -10,7 +10,7 @@ public:
     ~CSceneHandler();
     
     void init();
-    void update();
+    void update(float tse);
     void destroy();
 private:
 

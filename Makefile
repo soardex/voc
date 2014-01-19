@@ -38,7 +38,7 @@ SRCS=\
 	$(SRCDIR)/system/SoundHandler.cpp
 
 OBJS=$(addprefix $(OBJDIR)/, $(SRCS:.cpp=.o))
-LIBS=-lm -lSDL2 -lGLEW -lGL -lGLU -lfreeimage
+LIBS=-lm -lSDL2 -lGLEW -lGL -lGLU -lfreeimage -llua
 
 CFLAGS=-std=c++0x -g -Wall -Wextra -pedantic
 LFLAGS=$(LIBDIR) $(LIBS)

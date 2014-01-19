@@ -116,6 +116,25 @@ protected:
 
 CTextureManager *CTextureManager::m_psInst = 0;
 
+#include <lua.hpp>
+
+class ScriptLoader
+{
+public:
+    void init()
+    {
+        m_psLua = lua_open();
+    }
+
+    void destroy()
+    {
+        lua_close(m_psLua);
+    }
+
+protected:
+    lua_State *m_psLua;
+};
+
 #include <assimp/assimp.h>
 #include <assimp/aiScene.h>
 #include <assimp/aiPostProcess.h>

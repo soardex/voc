@@ -13,7 +13,8 @@ void CSceneHandler::init()
 {
 }
 
-void CSceneHandler::update()
+float angle = 30.0f;
+void CSceneHandler::update(float tse)
 {
     glViewport(0, 0, 640, 480);
 
@@ -42,6 +43,7 @@ void CSceneHandler::update()
             }
         glEnd();
 
+        glRotatef(angle * tse, 0.0, 0.0, 1.0);
         glPushMatrix();
             glTranslatef(0.0f, 0.0f, -300.0f);
             glRotatef(90.0, 1.0, 0.0, 0.0);

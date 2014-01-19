@@ -30,10 +30,17 @@ public:
 
     void update()
     {
+        float previousTick = 0.0f, currentTick = SDL_GetTicks();
+        float deltaTick = 0.0f;
         while (true)
         {
+            previousTick = currentTick;
+            currentTick = SDL_GetTicks();
+
+            deltaTick = (currentTick - previousTick) / 1000.0f;
+
             m_psInput->update();
-            m_psScene->update();
+            m_psScene->update(deltaTick);
 
             m_psRender->update();
 
