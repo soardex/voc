@@ -4,6 +4,8 @@ default: all
 TARGET=voc
 CC=g++
 RM=rm -f
+CP=cp
+SED=sed
 CP_R=cp -r
 RM_R=rm -rf
 MKDIR_P=mkdir -p
@@ -15,29 +17,50 @@ RESDIR=$(OUTDIR)/assets
 LUADIR=$(OUTDIR)/scripts
 CNFDIR=$(OUTDIR)/configs
 TSTDIR=$(OUTDIR)/tests
+DEPDIR=$(OUTDIR)/objects/deps
+
+DF=$(DEPDIR)/$(*F)
 
 NCRDIR=ncres
 INCDIR=
-LIBDIR=
+LIBDIR=-L/usr/lib64/
+
 SRCDIR=voc
 
 SRCS=\
 	$(SRCDIR)/AppMain.cpp \
 	$(SRCDIR)/EmperorSystem.cpp \
-	$(SRCDIR)/SecondLife.cpp
+	$(SRCDIR)/SecondLife.cpp \
+	$(SRCDIR)/system/AssetsHandler.cpp \
+	$(SRCDIR)/system/InputHandler.cpp \
+	$(SRCDIR)/system/RenderHandler.cpp \
+	$(SRCDIR)/system/SceneHandler.cpp \
+	$(SRCDIR)/system/SoundHandler.cpp
 
 OBJS=$(addprefix $(OBJDIR)/, $(SRCS:.cpp=.o))
-LIBS=-lm
+LIBS=-lm -lSDL2 -lGLEW -lGL -lGLU -lfreeimage
 
-CFLAGS=-g -Wall
-LFLAGS=$(LIBS)
+CFLAGS=-std=c++0x -g -Wall -Wextra -pedantic
+LFLAGS=$(LIBDIR) $(LIBS)
 
 all: directories populate $(TARGET)
 
 $(OBJDIR)/%.o: %.c
+	$(CC) -M $(CFLAGS) -c $^ -o $(DF).d
+	$(CP) $(DF).d $(DF).P
+	$(SED)  -e 's/#.*//' -e 's/^[^:]*: *//' \
+		-e 's/ *\\$$//' \
+		-e '/^$$/ d' -e 's/$$/ :/' < $(DF).d >> $(DF).P 
+	$(RM) $(DF).d
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 $(OBJDIR)/%.o: %.cpp
+	$(CC) -M $(CFLAGS) -c $^ -o $(DF).d
+	$(CP) $(DF).d $(DF).P
+	$(SED)  -e 's/#.*//' -e 's/^[^:]*: *//' \
+		-e 's/ *\\$$//' \
+		-e '/^$$/ d' -e 's/$$/ :/' < $(DF).d >> $(DF).P
+	$(RM) $(DF).d
 	$(CC) $(CFLAGS) -c $^ -o $@
 
 $(TARGET): $(OBJS)
@@ -47,6 +70,8 @@ directories:
 	$(MKDIR_P) $(OUTDIR)
 	$(MKDIR_P) $(OBJDIR)
 	$(MKDIR_P) $(OBJDIR)/$(SRCDIR)
+	$(MKDIR_P) $(OBJDIR)/$(SRCDIR)/system
+	$(MKDIR_P) $(DEPDIR)
 	$(MKDIR_P) $(BINDIR)
 	$(MKDIR_P) $(RESDIR)
 	$(MKDIR_P) $(LUADIR)
@@ -61,13 +86,12 @@ populate:
 .PHONY: clean
 
 clean:
-	$(RM) $(OBJDIR)/*.o 
-	$(RM) $(OBJDIR)/$(SRCDIR)/*.o 
+	$(RM) $(OBJDIR)/*.{o,P,d} 
+	$(RM) $(OBJDIR)/$(SRCDIR)/*.{o,P,d}
+	$(RM) $(DEPDIR)/*.{o,P,d} 
 	$(RM) $(BINDIR)/$(TARGET)
 	$(RM_R) $(OUTDIR)
 
-depend: $(SRCS)
-	$(CC) -MD $(INCDIR) $^
-
 # DO NOT DELETE THIS LINE -- make depends needs it
 
+-include $(SRCS:%.cpp=$(DEPDIR)/%.P)
