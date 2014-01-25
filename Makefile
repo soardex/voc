@@ -22,7 +22,7 @@ DEPDIR=$(OUTDIR)/objects/deps
 DF=$(DEPDIR)/$(*F)
 
 NCRDIR=ncres
-INCDIR=
+INCDIR=-I/usr/include/bullet/
 LIBDIR=-L/usr/lib64/
 
 SRCDIR=voc
@@ -33,14 +33,17 @@ SRCS=\
 	$(SRCDIR)/SecondLife.cpp \
 	$(SRCDIR)/system/AssetsHandler.cpp \
 	$(SRCDIR)/system/InputHandler.cpp \
+	$(SRCDIR)/system/PhysicsHandler.cpp \
 	$(SRCDIR)/system/RenderHandler.cpp \
 	$(SRCDIR)/system/SceneHandler.cpp \
-	$(SRCDIR)/system/SoundHandler.cpp
+	$(SRCDIR)/system/SoundHandler.cpp \
+	$(SRCDIR)/system/TimeHandler.cpp
 
 OBJS=$(addprefix $(OBJDIR)/, $(SRCS:.cpp=.o))
-LIBS=-lm -lSDL2 -lGLEW -lGL -lGLU -lfreeimage -llua
+LIBS=-lm -lSDL2 -lGLEW -lGL -lGLU -lfreeimage -llua -lassimp \
+	 -lLinearMath -lBulletDynamics -lBulletCollision -lBulletSoftBody
 
-CFLAGS=-std=c++0x -g -Wall -Wextra -pedantic
+CFLAGS=-std=c++0x -g -Wall -Wextra -pedantic $(INCDIR)
 LFLAGS=$(LIBDIR) $(LIBS)
 
 all: directories populate $(TARGET)
