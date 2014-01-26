@@ -39,9 +39,9 @@ public:
     {
         float previousTime = 0.0f, currentTime = float(SDL_GetTicks());
         float deltaTime = 0.0f;
-        float angle = 0.0f;
-        float cameraEyeX = 0.0f, cameraEyeZ = -1.0f;
-        float cameraPosX = 0.0f, cameraPosZ = 5.0f;
+        float angle = 0.0f, look = 0.0f;
+        float cameraEyeX = 0.0f, cameraEyeZ = -1.0f, cameraEyeY = 0.0f;
+        float cameraPosX = 0.0f, cameraPosZ = 5.0f, cameraPosY = 0.0f;
         while (true)
         {
             previousTime = currentTime;
@@ -50,19 +50,21 @@ public:
 
             m_psInput->update();
 
-            glm::mat4 view = glm::lookAt(glm::vec3(cameraPosX, 0.0f, cameraPosZ),
-                    glm::vec3((cameraPosX + cameraEyeX), 0.0f, (cameraPosZ + cameraEyeZ)),
+            glm::mat4 view = glm::lookAt(glm::vec3(cameraPosX, cameraPosY, cameraPosZ),
+                    glm::vec3((cameraPosX + cameraEyeX), (cameraPosY + cameraEyeY), (cameraPosZ + cameraEyeZ)),
                     glm::vec3(0.0f, 1.0f, 0.0f));
 
             if (m_psInput->getSpectatorKeyState(CInputHandler::SPECKEY::E_SK_UP))
             {
                 cameraPosX += cameraEyeX * 3.1415f * deltaTime;
                 cameraPosZ += cameraEyeZ * 3.1415f * deltaTime;
+                cameraPosY += cameraEyeY * 3.1415f * deltaTime;
             }
             else if (m_psInput->getSpectatorKeyState(CInputHandler::SPECKEY::E_SK_DN))
             {
                 cameraPosX -= cameraEyeX * 3.1415f * deltaTime;
                 cameraPosZ -= cameraEyeZ * 3.1415f * deltaTime;
+                cameraPosY -= cameraEyeY * 3.1415f * deltaTime;
             }
             else if (m_psInput->getSpectatorKeyState(CInputHandler::SPECKEY::E_SK_LT))
             {
@@ -77,14 +79,16 @@ public:
                 cameraEyeZ = -cos(angle);
             }
 
-            //if (m_psInput->getSpectatorKeyState(CInputHandler::SPECKEY::E_SK_W))
-            //    view = glm::rotate(glm::mat4(1.0f), 10.0f * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f)) * view;
-            //else if (m_psInput->getSpectatorKeyState(CInputHandler::SPECKEY::E_SK_S))
-            //    view = glm::rotate(glm::mat4(1.0f), -10.0f * deltaTime, glm::vec3(1.0f, 0.0f, 0.0f)) * view;
-            //else if (m_psInput->getSpectatorKeyState(CInputHandler::SPECKEY::E_SK_A))
-            //    view = glm::rotate(glm::mat4(1.0f), 10.0f * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f)) * view;
-            //else if (m_psInput->getSpectatorKeyState(CInputHandler::SPECKEY::E_SK_D))
-            //    view = glm::rotate(glm::mat4(1.0f), -10.0f * deltaTime, glm::vec3(0.0f, 1.0f, 0.0f)) * view;
+            if (m_psInput->getSpectatorKeyState(CInputHandler::SPECKEY::E_SK_PGUP))
+            {
+                look += 3.1415f * deltaTime;
+                cameraEyeY = sin(look);
+            }
+            else if (m_psInput->getSpectatorKeyState(CInputHandler::SPECKEY::E_SK_PGDN))
+            {
+                look -= 3.1415f * deltaTime;
+                cameraEyeY = sin(look);
+            }
 
             m_psPhysics->update(deltaTime);
             m_psScene->update(deltaTime, view);

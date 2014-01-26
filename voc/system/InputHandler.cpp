@@ -57,6 +57,12 @@ void CInputHandler::update()
                 if (m_sEvent.key.keysym.sym == SDLK_d)
                     m_bSpectatorKeys[E_SK_D] = true;
 
+                if (m_sEvent.key.keysym.sym == SDLK_PAGEUP)
+                    m_bSpectatorKeys[E_SK_PGUP] = true;
+
+                if (m_sEvent.key.keysym.sym == SDLK_PAGEDOWN)
+                    m_bSpectatorKeys[E_SK_PGDN] = true;
+
                 break;
             case SDL_KEYUP:
                 if (m_sEvent.key.keysym.sym == SDLK_ESCAPE)

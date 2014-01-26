@@ -23,6 +23,9 @@ public:
         E_SK_S,
         E_SK_A,
         E_SK_D,
+        
+        E_SK_PGUP,
+        E_SK_PGDN,
 
         E_SK_MAX
     };
