@@ -273,8 +273,6 @@ public:
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, c);
         }
 
-
-
         max = 1;
         if(AI_SUCCESS == aiGetMaterialIntegerArray(mtl, AI_MATKEY_ENABLE_WIREFRAME, &wireframe, &max))
             fill_mode = wireframe ? GL_LINE : GL_FILL;
