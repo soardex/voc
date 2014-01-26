@@ -56,23 +56,23 @@ public:
 
             if (m_psInput->getSpectatorKeyState(CInputHandler::SPECKEY::E_SK_UP))
             {
-                cameraPosX += cameraEyeX * 3.1414f * deltaTime;
-                cameraPosZ += cameraEyeZ * 3.1414f * deltaTime;
+                cameraPosX += cameraEyeX * 3.1415f * deltaTime;
+                cameraPosZ += cameraEyeZ * 3.1415f * deltaTime;
             }
             else if (m_psInput->getSpectatorKeyState(CInputHandler::SPECKEY::E_SK_DN))
             {
-                cameraPosX -= cameraEyeX * 3.1414f * deltaTime;
-                cameraPosZ -= cameraEyeZ * 3.1414f * deltaTime;
+                cameraPosX -= cameraEyeX * 3.1415f * deltaTime;
+                cameraPosZ -= cameraEyeZ * 3.1415f * deltaTime;
             }
             else if (m_psInput->getSpectatorKeyState(CInputHandler::SPECKEY::E_SK_LT))
             {
-                angle -= 3.1414f * deltaTime;
+                angle -= 3.1415f * deltaTime;
                 cameraEyeX = sin(angle);
                 cameraEyeZ = -cos(angle);
             }
             else if (m_psInput->getSpectatorKeyState(CInputHandler::SPECKEY::E_SK_RT))
             {
-                angle += 3.1414f * deltaTime;
+                angle += 3.1415f * deltaTime;
                 cameraEyeX = sin(angle);
                 cameraEyeZ = -cos(angle);
             }

@@ -22,7 +22,7 @@ DEPDIR=$(OUTDIR)/objects/deps
 DF=$(DEPDIR)/$(*F)
 
 NCRDIR=ncres
-INCDIR=-I/usr/include/bullet/
+INCDIR=-isystem /usr/include/bullet/
 LIBDIR=-L/usr/lib64/
 
 SRCDIR=voc
