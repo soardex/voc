@@ -1,9 +1,36 @@
 #include "SceneHandler.h"
+#include "../utils/Helpers.h"
 #include "../utils/GeometryUtils.h"
 
+std::string const vertShaderSource = "/home/pastel/Projects/voc/src/build/assets/shaders/common.vs";
+std::string const fragShaderSource = "/home/pastel/Projects/voc/src/build/assets/shaders/common.fs";
+
+GLsizei const elementCount = 6;
+GLsizeiptr const elementSize = elementCount * sizeof(glm::uint32);
+glm::uint32 const elementData[elementCount] =
+{
+    0, 1, 2,
+    0, 2, 3
+};
+
+GLsizei const vertexCount = 4;
+GLsizeiptr const vertexSize = vertexCount * sizeof(glm::vec2);
+glm::vec2 const vertexData[vertexCount] = 
+{
+    glm::vec2(-1.0f, -1.0f),
+    glm::vec2( 1.0f, -1.0f),
+    glm::vec2( 1.0f,  1.0f),
+    glm::vec2(-1.0f,  1.0f)
+};
+
+GLuint vertexArray = 0;
+GLuint program = 0;
+GLuint arrayBuffer = 0;
+GLuint elementBuffer = 0;
+GLint uniformMVP = 0;
+GLint uniformDiffuse = 0;
 
 CSceneHandler::CSceneHandler()
-    : m_fAngle(0)
 {
 }
 
@@ -12,6 +39,55 @@ CSceneHandler::~CSceneHandler()
 }
 
 void CSceneHandler::init()
+{
+    bool validated = true;
+
+    if (validated)
+    {
+        GLuint vertShader = helpers::createShader(GL_VERTEX_SHADER, vertShaderSource);
+        GLuint fragShader = helpers::createShader(GL_FRAGMENT_SHADER, fragShaderSource);
+
+        validated = validated && helpers::checkShader(vertShader, vertShaderSource);
+        validated = validated && helpers::checkShader(fragShader, fragShaderSource);
+
+        program = glCreateProgram();
+        glAttachShader(program, vertShader);
+        glAttachShader(program, fragShader);
+
+        glDeleteShader(vertShader);
+        glDeleteShader(fragShader);
+
+        glBindAttribLocation(program, helpers::semantic::attr::POSITION, "Position");
+        glLinkProgram(program);
+
+        validated = helpers::checkProgram(program);
+    }
+
+    if (validated)
+    {
+        uniformMVP = glGetUniformLocation(program, "MVP");
+        uniformDiffuse = glGetUniformLocation(program, "Diffuse");
+    }
+
+    if (validated)
+    {
+        glUseProgram(program);
+        glUniform4fv(uniformDiffuse, 1, &glm::vec4(1.0f, 0.5f, 0.0f, 1.0f)[0]);
+        glUseProgram(0);
+    }
+    
+    glGenBuffers(1, &arrayBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, arrayBuffer);
+    glBufferData(GL_ARRAY_BUFFER, vertexSize, vertexData, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glGenBuffers(1, &elementBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, elementData, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void CSceneHandler::update(float tse, glm::mat4 view)
 {
     glViewport(0, 0, 640, 480);
 
@@ -23,149 +99,31 @@ void CSceneHandler::init()
             glm::vec3(0.0f, 1.0f, 0.0f));
 
     glm::mat4 mvp = m_sProjection * m_sView * m_sModel;
-    glLoadMatrixf(glm::value_ptr(mvp));
 
-    m_fAngle = 0.0f;
-}
-
-void CSceneHandler::update(float tse, glm::mat4 view)
-{
     glClearColor(0.0f, 0.7f, 0.7f, 1.0f);
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    //glEnable(GL_TEXTURE_2D);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
-    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    glUseProgram(program);
+    glUniformMatrix4fv(uniformMVP, 1, GL_FALSE, &mvp[0][0]);
 
-    GLfloat lightAmbient[] = { 0.5f, 0.5f, 0.5f, 1.0f };
-    GLfloat lightDiffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glBindBuffer(GL_ARRAY_BUFFER, arrayBuffer);
+    glVertexAttribPointer(helpers::semantic::attr::POSITION, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glEnable(GL_LIGHTING);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
-    glEnable(GL_LIGHT0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
 
-    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-    glEnable(GL_NORMALIZE);
+    glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
+    glDrawRangeElements(GL_TRIANGLES, 0, vertexCount, elementCount, GL_UNSIGNED_INT, 0);
+    glDisableVertexAttribArray(helpers::semantic::attr::POSITION);
 
-    glFrontFace(GL_CCW);
-    glEnable(GL_CULL_FACE);
-
-    GLfloat lightPosition01[] = { 10.0f, 10.0f, 10.0f, 1.0f };
-    glLightfv(GL_LIGHT1, GL_POSITION, lightPosition01);
-    glLightfv(GL_LIGHT1, GL_AMBIENT, lightAmbient);
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, lightDiffuse);
-    glEnable(GL_LIGHT1);
-
-    glEnable(GL_COLOR_MATERIAL);
-    glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-
-    glm::mat4 mvp = m_sProjection * view * m_sModel;
-    glLoadMatrixf(glm::value_ptr(mvp));
-
-    glPushMatrix();
-        float extent = 30.0f, step = 1.0f, h = -0.6f;
-        glColor3f(0.0, 0.0, 0.0);
-        glBegin(GL_LINES);
-            for (int line = -extent; line <= extent; line += step)
-            {
-                glVertex3f(line, h, extent);
-                glVertex3f(line, h, -extent);
-
-                glVertex3f(extent, h, line);
-                glVertex3f(-extent, h, line);
-            }
-        glEnd();
-
-        glm::vec3 cubeVertices[12] = 
-        {
-            glm::vec3(0, 0, 0),
-            glm::vec3(1, 0, 0),
-            glm::vec3(1, 1, 0),
-            glm::vec3(0, 1, 0),
-            glm::vec3(1, 0, 1),
-            glm::vec3(1, 1, 1),
-            glm::vec3(0, 1, 1),
-            glm::vec3(0, 0, 1),
-            glm::vec3(0, 1, 1),
-            glm::vec3(0, 1, 0),
-            glm::vec3(1, 0, 1),
-            glm::vec3(1, 0, 0)
-        };
- 
-        glm::vec3 cubeNormals[12] = 
-        {
-            glm::vec3(-1, -1, -1),
-            glm::vec3( 1, -1, -1),
-            glm::vec3( 1,  1, -1),
-            glm::vec3(-1,  1, -1),
-            glm::vec3( 1, -1,  1),
-            glm::vec3( 1,  1,  1),
-            glm::vec3(-1,  1,  1),
-            glm::vec3(-1, -1,  1),
-            glm::vec3(-1,  1,  1),
-            glm::vec3(-1,  1, -1),
-            glm::vec3( 1, -1,  1),
-            glm::vec3( 1, -1, -1)
-        };
-
-        glm::vec2 cubeTexCoords[12] =
-        {
-            glm::vec2(0, 1),
-            glm::vec2(1, 1),
-            glm::vec2(1, 0),
-            glm::vec2(0, 0),
-            glm::vec2(0, 1),
-            glm::vec2(0, 0),
-            glm::vec2(1, 0),
-            glm::vec2(1, 1),
-            glm::vec2(0, 1),
-            glm::vec2(1, 1),
-            glm::vec2(1, 0),
-            glm::vec2(0, 0)
-        };
-
-        int cubeIndices[36] =
-        {
-            0, 2, 1,
-            0, 3, 2,
-            1, 5, 4,
-            1, 2, 5,
-            4, 6, 7,
-            4, 5, 6,
-            7, 3, 0,
-            7, 6, 3,
-            9, 5, 2,
-            9, 8, 5,
-            0, 11, 10,
-            0, 10, 7
-        };
-
-        glPushMatrix();
-            m_fAngle += 45 * tse;
-
-            glm::mat4 rotate = glm::rotate(glm::mat4(1.0f), m_fAngle, glm::vec3(0.0f, 1.0f, 0.0f));
-            glm::mat4 translate = glm::translate(rotate, glm::vec3(0.0f, 0.0f, 0.0f));
-
-            glMultMatrixf(glm::value_ptr(translate));
-            glBegin(GL_TRIANGLES);
-                for (int i = 0; i < int(sizeof(cubeIndices) / sizeof(cubeIndices[0])); i++)
-                {
-                    glColor4ub(255, 255, 255, 255);
-                    glNormal3fv(glm::value_ptr(cubeNormals[cubeIndices[i]]));
-                    glTexCoord2fv(glm::value_ptr(cubeTexCoords[cubeIndices[i]]));
-
-                    glm::vec3 v = cubeVertices[cubeIndices[i]] - glm::vec3(0.5f);
-                    v *= glm::vec3(1.0f);
-                    glVertex3fv(glm::value_ptr(v));
-                }
-            glEnd();
-        glPopMatrix();
-    glPopMatrix();
+    glUseProgram(0);
 }
 
 void CSceneHandler::destroy()
 {
+    glDeleteBuffers(1, &arrayBuffer);
+    glDeleteBuffers(1, &elementBuffer);
+    glDeleteProgram(program);
 }
 

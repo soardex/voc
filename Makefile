@@ -31,6 +31,7 @@ SRCS=\
 	$(SRCDIR)/AppMain.cpp \
 	$(SRCDIR)/EmperorSystem.cpp \
 	$(SRCDIR)/SecondLife.cpp \
+	$(SRCDIR)/utils/Helpers.cpp \
 	$(SRCDIR)/system/AssetsHandler.cpp \
 	$(SRCDIR)/system/InputHandler.cpp \
 	$(SRCDIR)/system/PhysicsHandler.cpp \
@@ -73,6 +74,7 @@ directories:
 	$(MKDIR_P) $(OUTDIR)
 	$(MKDIR_P) $(OBJDIR)
 	$(MKDIR_P) $(OBJDIR)/$(SRCDIR)
+	$(MKDIR_P) $(OBJDIR)/$(SRCDIR)/utils
 	$(MKDIR_P) $(OBJDIR)/$(SRCDIR)/system
 	$(MKDIR_P) $(DEPDIR)
 	$(MKDIR_P) $(BINDIR)

@@ -19,8 +19,6 @@ private:
     glm::mat4 m_sProjection;
     glm::mat4 m_sView;
     glm::mat4 m_sModel;
-
-    float m_fAngle;
 };
 
 #endif /* end of include guard: _SCENE_HANDLER_H_ */

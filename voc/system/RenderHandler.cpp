@@ -33,7 +33,10 @@ void CRenderHandler::init()
 
     GLenum status = glewInit();
     if (status != GLEW_OK)
+    {
+        fprintf(stderr, "Error: %s\n", glewGetErrorString(status));
         exit(1);
+    }
 
     SDL_GL_SetSwapInterval(1);
 }
