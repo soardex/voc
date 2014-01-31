@@ -42,6 +42,7 @@ void CSceneHandler::init()
 {
     bool validated = true;
 
+    helpers::checkGLVersion();
     if (validated)
     {
         GLuint vertShader = helpers::createShader(GL_VERTEX_SHADER, vertShaderSource);
@@ -85,6 +86,30 @@ void CSceneHandler::init()
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, elementData, GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    glViewport(0, 0, 640, 480);
+
+    m_sProjection = glm::perspective(45.0f, 640.0f / 480.0f, 0.1f, 750.0f);
+    m_sModel = glm::mat4(1.0f);
+    m_sView = glm::lookAt(
+            glm::vec3(0.0f, 0.0f, 3.0f),
+            glm::vec3(0.0f, 0.0f, -5.0f),
+            glm::vec3(0.0f, 1.0f, 0.0f));
+
+    glm::mat4 mvp = m_sProjection * m_sView * m_sModel;
+
+    float extent = 30.0f, step = 1.0f, h = -0.6f;
+    for (int line = -extent; line <= extent; line += step)
+    {
+        glm::vec3(line, h, extent);
+        glm::vec3(line, h, -extent);
+
+        glm::vec3(extent, h, line);
+        glm::vec3(-extent, h, line);
+    }
+
+    glUseProgram(program);
+    glUniformMatrix4fv(uniformMVP, 1, GL_FALSE, &mvp[0][0]);
 }
 
 void CSceneHandler::update(float tse, glm::mat4 view)
@@ -98,14 +123,12 @@ void CSceneHandler::update(float tse, glm::mat4 view)
             glm::vec3(0.0f, 0.0f, -5.0f),
             glm::vec3(0.0f, 1.0f, 0.0f));
 
-    glm::mat4 mvp = m_sProjection * m_sView * m_sModel;
+    glm::mat4 mvp = m_sProjection * view * m_sModel;
+    glUniformMatrix4fv(uniformMVP, 1, GL_FALSE, &mvp[0][0]);
 
     glClearColor(0.0f, 0.7f, 0.7f, 1.0f);
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    glUseProgram(program);
-    glUniformMatrix4fv(uniformMVP, 1, GL_FALSE, &mvp[0][0]);
 
     glBindBuffer(GL_ARRAY_BUFFER, arrayBuffer);
     glVertexAttribPointer(helpers::semantic::attr::POSITION, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -114,14 +137,14 @@ void CSceneHandler::update(float tse, glm::mat4 view)
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
 
     glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
-    glDrawRangeElements(GL_TRIANGLES, 0, vertexCount, elementCount, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, elementCount, GL_UNSIGNED_INT, 0);
     glDisableVertexAttribArray(helpers::semantic::attr::POSITION);
-
-    glUseProgram(0);
 }
 
 void CSceneHandler::destroy()
 {
+    glUseProgram(0);
+
     glDeleteBuffers(1, &arrayBuffer);
     glDeleteBuffers(1, &elementBuffer);
     glDeleteProgram(program);

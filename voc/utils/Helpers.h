@@ -117,6 +117,7 @@ namespace helpers
     bool checkProgram(GLuint program);
     bool validateProgram(GLuint program);
 
+    bool checkGLVersion();
 }
 
 #endif /* end of include guard: _HELPERS_H_ */
