@@ -5,33 +5,41 @@
 std::string const vertShaderSource = "/home/pastel/Projects/voc/src/build/assets/shaders/common.vs";
 std::string const fragShaderSource = "/home/pastel/Projects/voc/src/build/assets/shaders/common.fs";
 
-GLsizei const elementCount = 6;
-GLsizeiptr const elementSize = elementCount * sizeof(glm::uint32);
-glm::uint32 const elementData[elementCount] =
-{
-    0, 1, 2,
-    0, 2, 3
-};
+//GLsizei const elementCount = 6;
+//GLsizeiptr const elementSize = elementCount * sizeof(glm::uint32);
+//glm::uint32 const elementData[elementCount] =
+//{
+//    0, 1, 2,
+//    0, 2, 3
+//};
+//
+//GLsizei const vertexCount = 4;
+//GLsizeiptr const vertexSize = vertexCount * sizeof(glm::vec2);
+//glm::vec2 const vertexData[vertexCount] = 
+//{
+//    glm::vec2(-1.0f, -1.0f),
+//    glm::vec2( 1.0f, -1.0f),
+//    glm::vec2( 1.0f,  1.0f),
+//    glm::vec2(-1.0f,  1.0f)
+//};
 
-GLsizei const vertexCount = 4;
-GLsizeiptr const vertexSize = vertexCount * sizeof(glm::vec2);
-glm::vec2 const vertexData[vertexCount] = 
-{
-    glm::vec2(-1.0f, -1.0f),
-    glm::vec2( 1.0f, -1.0f),
-    glm::vec2( 1.0f,  1.0f),
-    glm::vec2(-1.0f,  1.0f)
-};
+GLsizei elementCount;
+GLsizeiptr elementSize;
+std::vector<glm::uint32> elementData;
 
-GLuint vertexArray = 0;
-GLuint program = 0;
-GLuint arrayBuffer = 0;
-GLuint elementBuffer = 0;
-GLint uniformMVP = 0;
-GLint uniformDiffuse = 0;
+GLsizei vertexCount;
+GLsizeiptr vertexSize;
+std::vector<glm::vec3> vertexData;
 
 CSceneHandler::CSceneHandler()
 {
+    m_nVertexArray = 0;
+    m_nProgram = 0;
+    m_nArrayBuffer = 0;
+    m_nElementBuffer = 0;
+
+    m_nUniformMVP = 0;
+    m_nUniformDiffuse = 0;
 }
 
 CSceneHandler::~CSceneHandler()
@@ -51,40 +59,61 @@ void CSceneHandler::init()
         validated = validated && helpers::checkShader(vertShader, vertShaderSource);
         validated = validated && helpers::checkShader(fragShader, fragShaderSource);
 
-        program = glCreateProgram();
-        glAttachShader(program, vertShader);
-        glAttachShader(program, fragShader);
+        m_nProgram = glCreateProgram();
+        glAttachShader(m_nProgram, vertShader);
+        glAttachShader(m_nProgram, fragShader);
 
         glDeleteShader(vertShader);
         glDeleteShader(fragShader);
 
-        glBindAttribLocation(program, helpers::semantic::attr::POSITION, "Position");
-        glLinkProgram(program);
+        glBindAttribLocation(m_nProgram, helpers::semantic::attr::POSITION, "Position");
+        glLinkProgram(m_nProgram);
 
-        validated = helpers::checkProgram(program);
+        validated = helpers::checkProgram(m_nProgram);
     }
 
     if (validated)
     {
-        uniformMVP = glGetUniformLocation(program, "MVP");
-        uniformDiffuse = glGetUniformLocation(program, "Diffuse");
+        m_nUniformMVP = glGetUniformLocation(m_nProgram, "MVP");
+        m_nUniformDiffuse = glGetUniformLocation(m_nProgram, "Diffuse");
     }
 
     if (validated)
     {
-        glUseProgram(program);
-        glUniform4fv(uniformDiffuse, 1, &glm::vec4(1.0f, 0.5f, 0.0f, 1.0f)[0]);
+        glUseProgram(m_nProgram);
+        glUniform4fv(m_nUniformDiffuse, 1, &glm::vec4(1.0f, 0.5f, 0.0f, 1.0f)[0]);
         glUseProgram(0);
     }
     
-    glGenBuffers(1, &arrayBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, arrayBuffer);
-    glBufferData(GL_ARRAY_BUFFER, vertexSize, vertexData, GL_STATIC_DRAW);
+    float extent = 30.0f, step = 1.0f, h = -0.6f;
+    for (int line = -extent; line <= extent; line += step)
+    {
+        vertexData.push_back(glm::vec3(line, h, extent));
+        vertexData.push_back(glm::vec3(line, h, -extent));
+
+        vertexData.push_back(glm::vec3(extent, h, line));
+        vertexData.push_back(glm::vec3(-extent, h, line));
+    }
+
+    vertexCount = vertexData.size();
+    vertexSize = vertexCount * sizeof(glm::vec3);
+
+    elementCount = vertexCount;
+    elementSize = elementCount * sizeof(glm::uint32);
+    for (int i = 0; i < elementCount; i++)
+        elementData.push_back(i);
+
+
+    printf("sizeof grid: %lu", sizeof(glm::vec3));
+
+    glGenBuffers(1, &m_nArrayBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, m_nArrayBuffer);
+    glBufferData(GL_ARRAY_BUFFER, vertexSize, &vertexData[0], GL_STATIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glGenBuffers(1, &elementBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, elementData, GL_STATIC_DRAW);
+    glGenBuffers(1, &m_nElementBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_nElementBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, &elementData[0], GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
     glViewport(0, 0, 640, 480);
@@ -98,18 +127,8 @@ void CSceneHandler::init()
 
     glm::mat4 mvp = m_sProjection * m_sView * m_sModel;
 
-    float extent = 30.0f, step = 1.0f, h = -0.6f;
-    for (int line = -extent; line <= extent; line += step)
-    {
-        glm::vec3(line, h, extent);
-        glm::vec3(line, h, -extent);
-
-        glm::vec3(extent, h, line);
-        glm::vec3(-extent, h, line);
-    }
-
-    glUseProgram(program);
-    glUniformMatrix4fv(uniformMVP, 1, GL_FALSE, &mvp[0][0]);
+    glUseProgram(m_nProgram);
+    glUniformMatrix4fv(m_nUniformMVP, 1, GL_FALSE, &mvp[0][0]);
 }
 
 void CSceneHandler::update(float tse, glm::mat4 view)
@@ -124,20 +143,20 @@ void CSceneHandler::update(float tse, glm::mat4 view)
             glm::vec3(0.0f, 1.0f, 0.0f));
 
     glm::mat4 mvp = m_sProjection * view * m_sModel;
-    glUniformMatrix4fv(uniformMVP, 1, GL_FALSE, &mvp[0][0]);
+    glUniformMatrix4fv(m_nUniformMVP, 1, GL_FALSE, &mvp[0][0]);
 
     glClearColor(0.0f, 0.7f, 0.7f, 1.0f);
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glBindBuffer(GL_ARRAY_BUFFER, arrayBuffer);
-    glVertexAttribPointer(helpers::semantic::attr::POSITION, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, m_nArrayBuffer);
+    glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_nElementBuffer);
 
     glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
-    glDrawElements(GL_TRIANGLES, elementCount, GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_LINES, elementCount, GL_UNSIGNED_INT, 0);
     glDisableVertexAttribArray(helpers::semantic::attr::POSITION);
 }
 
@@ -145,8 +164,8 @@ void CSceneHandler::destroy()
 {
     glUseProgram(0);
 
-    glDeleteBuffers(1, &arrayBuffer);
-    glDeleteBuffers(1, &elementBuffer);
-    glDeleteProgram(program);
+    glDeleteBuffers(1, &m_nArrayBuffer);
+    glDeleteBuffers(1, &m_nElementBuffer);
+    glDeleteProgram(m_nProgram);
 }
 
