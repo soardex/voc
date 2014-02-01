@@ -84,7 +84,7 @@ namespace helpers
         GLint result = GL_FALSE;
         glGetProgramiv(program, GL_LINK_STATUS, &result);
 
-        fprintf(stdout, "Linking program\n");
+        fprintf(stdout, "Linking program...\n");
 
         int infoLength;
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLength);

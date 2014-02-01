@@ -2,8 +2,6 @@
 #define _SCENE_HANDLER_H_
 
 #include "../Commons.h"
-#include "AssetsHandler.h"
-
 
 class CSceneHandler
 {

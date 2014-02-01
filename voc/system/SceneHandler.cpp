@@ -103,9 +103,6 @@ void CSceneHandler::init()
     for (int i = 0; i < elementCount; i++)
         elementData.push_back(i);
 
-
-    printf("sizeof grid: %lu", sizeof(glm::vec3));
-
     glGenBuffers(1, &m_nArrayBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, m_nArrayBuffer);
     glBufferData(GL_ARRAY_BUFFER, vertexSize, &vertexData[0], GL_STATIC_DRAW);
