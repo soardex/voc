@@ -24,10 +24,11 @@
 #include <time.h>
 #include <assert.h>
 
-#include <vector>
-#include <map>
 #include <fstream>
+#include <map>
+#include <stack>
 #include <string>
+#include <vector>
 
 #include <GL/glew.h>
 #include <SDL2/SDL.h>

@@ -1,9 +1,8 @@
 #version 150
-
-uniform mat4 MVP;
-attribute vec4 Position;
+attribute vec3 position;
+uniform mat4 mvp;
 
 void main() {
-    gl_Position = MVP * Position;
+    gl_Position = mvp * vec4(position, 1.0);
 }
 
