@@ -2,6 +2,7 @@
 #define _SCENE_HANDLER_H_
 
 #include "../Commons.h"
+#include "AssetsHandler.h"
 
 class CSceneHandler
 {
@@ -18,18 +19,33 @@ protected:
     void pop();
 
 private:
+    CTextureManager *m_sTexture;
+
     glm::mat4 m_sProjection;
     glm::mat4 m_sView;
     glm::mat4 m_sModel;
 
-    GLuint m_nProgram;
-    GLuint m_nVertexArray;
-    GLuint m_nArrayBuffer;
-    GLuint m_nElementBuffer;
+    enum OBJECT
+    {
+        O_GRID,
+        O_CUBE,
 
-    GLuint m_nCubeVertexArray;
-    GLuint m_nCubeArrayBuffer;
-    GLuint m_nCubeElementBuffer;
+        O_MAX
+    };
+
+    enum BUFFER
+    {
+        B_VERTEX,
+        B_ELEMENT,
+
+        B_MAX
+    };
+
+    GLuint m_nProgram;
+
+    std::vector<GLuint> m_vVertexArray;
+    std::vector<GLuint> m_vGridBuffer;
+    std::vector<GLuint> m_vCubeBuffer;
 
     GLint m_nUniformMVP;
     GLint m_nUniformDiffuse;

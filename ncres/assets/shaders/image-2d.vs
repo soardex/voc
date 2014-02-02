@@ -1,18 +1,14 @@
 #version 150
 
 attribute vec3 position;
-attribute vec3 normal;
-attribute vec2 tc;
+attribute vec2 texcoord;
+attribute float time;
 
 uniform mat4 mvp;
-
-varying vec2 uv;
-varying vec3 nm;
+out vec2 uv;
 
 void main() {
     gl_Position = mvp * vec4(position, 1.0);
-    uv = tc;
-
-    nm = normalize(normal);
+    uv = texcoord;
 }
 

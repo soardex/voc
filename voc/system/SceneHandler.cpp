@@ -2,24 +2,23 @@
 #include "../utils/Helpers.h"
 #include "../utils/GeometryUtils.h"
 
-std::string const vertShaderSource = "/home/pastel/Projects/voc/src/build/assets/shaders/common.vs";
-std::string const fragShaderSource = "/home/pastel/Projects/voc/src/build/assets/shaders/common.fs";
+std::string const vertShaderSource = "/home/pastel/Projects/voc/src/build/assets/shaders/image-2d.vs";
+std::string const fragShaderSource = "/home/pastel/Projects/voc/src/build/assets/shaders/image-2d.fs";
+
+std::string const textureSampler = "/home/pastel/Projects/voc/src/build/assets/textures/water.jpg";
 
 GLsizei gridElementCount;
 GLsizei cubeElementCount;
 
+GLuint locType;
+
 CSceneHandler::CSceneHandler()
-    : m_sCurrentMatrix(1)
+    : m_vVertexArray(OBJECT::O_MAX),
+    m_vGridBuffer(BUFFER::B_MAX),
+    m_vCubeBuffer(BUFFER::B_MAX),
+    m_sCurrentMatrix(1)
 {
     m_nProgram = 0;
-
-    m_nVertexArray = 0;
-    m_nArrayBuffer = 0;
-    m_nElementBuffer = 0;
-
-    m_nCubeVertexArray = 0;
-    m_nCubeArrayBuffer = 0;
-    m_nCubeElementBuffer = 0;
 
     m_nUniformMVP = 0;
     m_nUniformDiffuse = 0;
@@ -31,6 +30,9 @@ CSceneHandler::~CSceneHandler()
 
 void CSceneHandler::init()
 {
+    m_sTexture = CTextureManager::inst();
+    m_sTexture->load(textureSampler.c_str(), 1);
+
     bool validated = true;
 
     helpers::checkGLVersion();
@@ -50,6 +52,7 @@ void CSceneHandler::init()
         glDeleteShader(fragShader);
 
         glBindAttribLocation(m_nProgram, helpers::semantic::attr::POSITION, "position");
+        glBindAttribLocation(m_nProgram, helpers::semantic::attr::TEXCOORD, "texcoord");
         glLinkProgram(m_nProgram);
 
         validated = helpers::checkProgram(m_nProgram);
@@ -59,6 +62,8 @@ void CSceneHandler::init()
     {
         m_nUniformMVP = glGetUniformLocation(m_nProgram, "mvp");
         m_nUniformDiffuse = glGetUniformLocation(m_nProgram, "diffuse");
+
+        locType = glGetUniformLocation(m_nProgram, "type");
     }
 
     if (validated)
@@ -68,6 +73,8 @@ void CSceneHandler::init()
         glUseProgram(0);
     }
     
+    glGenVertexArrays(OBJECT::O_MAX, &m_vVertexArray[0]);
+
     //! Populate Grid VAO
     {
         GLsizeiptr gridElementSize;
@@ -95,22 +102,22 @@ void CSceneHandler::init()
         for (int i = 0; i < gridElementCount; i++)
             gridElementData.push_back(i);
 
-        glGenBuffers(1, &m_nArrayBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, m_nArrayBuffer);
+        glGenBuffers(BUFFER::B_MAX, &m_vGridBuffer[0]);
+
+        glBindBuffer(GL_ARRAY_BUFFER, m_vGridBuffer[BUFFER::B_VERTEX]);
         glBufferData(GL_ARRAY_BUFFER, gridVertexSize, &gridVertexData[0], GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        glGenBuffers(1, &m_nElementBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_nElementBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vGridBuffer[BUFFER::B_ELEMENT]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, gridElementSize, &gridElementData[0], GL_STATIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        glGenVertexArrays(1, &m_nVertexArray);
-        glBindVertexArray(m_nVertexArray);
-            glBindBuffer(GL_ARRAY_BUFFER, m_nArrayBuffer);
+        glBindVertexArray(m_vVertexArray[OBJECT::O_GRID]);
+            glBindBuffer(GL_ARRAY_BUFFER, m_vGridBuffer[BUFFER::B_VERTEX]);
             glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_nElementBuffer);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vGridBuffer[BUFFER::B_ELEMENT]);
             glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
         glBindVertexArray(0);
     }
@@ -118,21 +125,33 @@ void CSceneHandler::init()
     //! Populate Cube Variables
     {
         GLsizei cubeVertexCount = 12;
-        GLsizeiptr cubeVertexSize = cubeVertexCount * sizeof(glm::vec3);
-        glm::vec3 cubeVertexData[12] = 
+        struct vertv3v2
         {
-            glm::vec3(0, 0, 0),
-            glm::vec3(1, 0, 0),
-            glm::vec3(1, 1, 0),
-            glm::vec3(0, 1, 0),
-            glm::vec3(1, 0, 1),
-            glm::vec3(1, 1, 1),
-            glm::vec3(0, 1, 1),
-            glm::vec3(0, 0, 1),
-            glm::vec3(0, 1, 1),
-            glm::vec3(0, 1, 0),
-            glm::vec3(1, 0, 1),
-            glm::vec3(1, 0, 0)
+            vertv3v2(glm::vec3 const &pos, glm::vec2 const &tc)
+                : position(pos),
+                texcoord(tc)
+            {
+            }
+
+            glm::vec3 position;
+            glm::vec2 texcoord;
+        };
+
+        GLsizeiptr cubeVertexSize = cubeVertexCount * sizeof(vertv3v2);
+        vertv3v2 cubeVertexData[12] = 
+        {
+            vertv3v2(glm::vec3(0, 0, 0), glm::vec2(0, 1)),
+            vertv3v2(glm::vec3(1, 0, 0), glm::vec2(1, 1)),
+            vertv3v2(glm::vec3(1, 1, 0), glm::vec2(1, 0)),
+            vertv3v2(glm::vec3(0, 1, 0), glm::vec2(0, 0)),
+            vertv3v2(glm::vec3(1, 0, 1), glm::vec2(0, 1)),
+            vertv3v2(glm::vec3(1, 1, 1), glm::vec2(0, 0)),
+            vertv3v2(glm::vec3(0, 1, 1), glm::vec2(1, 0)),
+            vertv3v2(glm::vec3(0, 0, 1), glm::vec2(1, 1)),
+            vertv3v2(glm::vec3(0, 1, 1), glm::vec2(0, 1)),
+            vertv3v2(glm::vec3(0, 1, 0), glm::vec2(1, 1)),
+            vertv3v2(glm::vec3(1, 0, 1), glm::vec2(1, 0)),
+            vertv3v2(glm::vec3(1, 0, 0), glm::vec2(0, 0))
         };
 
         cubeElementCount = 36;
@@ -153,59 +172,43 @@ void CSceneHandler::init()
             0, 10, 7
         };
 
-        GLsizei cubeNormalsCount = 12;
-        GLsizeiptr cubeNormalsSize = cubeNormalsCount * sizeof(glm::vec3);
-        glm::vec3 cubeNormalsData[12] = 
-        {
-            glm::vec3(-1, -1, -1),
-            glm::vec3( 1, -1, -1),
-            glm::vec3( 1,  1, -1),
-            glm::vec3(-1,  1, -1),
-            glm::vec3( 1, -1,  1),
-            glm::vec3( 1,  1,  1),
-            glm::vec3(-1,  1,  1),
-            glm::vec3(-1, -1,  1),
-            glm::vec3(-1,  1,  1),
-            glm::vec3(-1,  1, -1),
-            glm::vec3( 1, -1,  1),
-            glm::vec3( 1, -1, -1)
-        };
+        //GLsizei cubeNormalsCount = 12;
+        //GLsizeiptr cubeNormalsSize = cubeNormalsCount * sizeof(glm::vec3);
+        //glm::vec3 cubeNormalsData[12] = 
+        //{
+        //    glm::vec3(-1, -1, -1),
+        //    glm::vec3( 1, -1, -1),
+        //    glm::vec3( 1,  1, -1),
+        //    glm::vec3(-1,  1, -1),
+        //    glm::vec3( 1, -1,  1),
+        //    glm::vec3( 1,  1,  1),
+        //    glm::vec3(-1,  1,  1),
+        //    glm::vec3(-1, -1,  1),
+        //    glm::vec3(-1,  1,  1),
+        //    glm::vec3(-1,  1, -1),
+        //    glm::vec3( 1, -1,  1),
+        //    glm::vec3( 1, -1, -1)
+        //};
 
-        GLsizei cubeTexCoordsCount = 12;
-        GLsizeiptr cubeTexCoordsSize = cubeTexCoordsCount * sizeof(glm::vec2);
-        glm::vec2 cubeTexCoordsData[12] =
-        {
-            glm::vec2(0, 1),
-            glm::vec2(1, 1),
-            glm::vec2(1, 0),
-            glm::vec2(0, 0),
-            glm::vec2(0, 1),
-            glm::vec2(0, 0),
-            glm::vec2(1, 0),
-            glm::vec2(1, 1),
-            glm::vec2(0, 1),
-            glm::vec2(1, 1),
-            glm::vec2(1, 0),
-            glm::vec2(0, 0)
-        };
+        glGenBuffers(BUFFER::B_MAX, &m_vCubeBuffer[0]);
 
-        glGenBuffers(1, &m_nCubeArrayBuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, m_nCubeArrayBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, m_vCubeBuffer[BUFFER::B_VERTEX]);
         glBufferData(GL_ARRAY_BUFFER, cubeVertexSize, cubeVertexData, GL_STATIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-        glGenBuffers(1, &m_nCubeElementBuffer);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_nCubeElementBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vCubeBuffer[BUFFER::B_ELEMENT]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, cubeElementSize, cubeElementData, GL_STATIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        glGenVertexArrays(1, &m_nCubeVertexArray);
-        glBindVertexArray(m_nCubeVertexArray);
-            glBindBuffer(GL_ARRAY_BUFFER, m_nCubeArrayBuffer);
-            glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, 0, 0);
+        glBindVertexArray(m_vVertexArray[OBJECT::O_CUBE]);
+            glBindBuffer(GL_ARRAY_BUFFER, m_vCubeBuffer[BUFFER::B_VERTEX]);
+            glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(vertv3v2), BUFFER_OFFSET(0));
+            glVertexAttribPointer(helpers::semantic::attr::TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(vertv3v2), BUFFER_OFFSET(sizeof(glm::vec2)));
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_nCubeElementBuffer);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_vCubeBuffer[BUFFER::B_ELEMENT]);
             glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
+            glEnableVertexAttribArray(helpers::semantic::attr::TEXCOORD);
         glBindVertexArray(0);
     }
 
@@ -220,14 +223,24 @@ void CSceneHandler::init()
 
     glm::mat4 mvp = m_sProjection * m_sView * m_sModel;
 
+    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+
+    glFrontFace(GL_CCW);
+
     glUseProgram(m_nProgram);
     glUniformMatrix4fv(m_nUniformMVP, 1, GL_FALSE, &mvp[0][0]);
+    glUseProgram(0);
 }
 
 void CSceneHandler::update(float tse, glm::mat4 view)
 {
     glm::mat4 mvp = m_sProjection * view * m_sModel;
+
+    glUseProgram(m_nProgram);
     glUniformMatrix4fv(m_nUniformMVP, 1, GL_FALSE, &mvp[0][0]);
+    glUseProgram(0);
 
     m_sCurrentMatrix = mvp;
 
@@ -235,31 +248,34 @@ void CSceneHandler::update(float tse, glm::mat4 view)
     glClearDepth(1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+    glUseProgram(m_nProgram);
     push();
-        glBindVertexArray(m_nVertexArray);
+        glBindVertexArray(m_vVertexArray[OBJECT::O_GRID]);
             glDrawElements(GL_LINES, gridElementCount, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         push();
-            glBindVertexArray(m_nCubeVertexArray);
+            glUniform1i(locType, 1);
+            glEnable(GL_TEXTURE_2D);
+            m_sTexture->bindTexture(1);
+            glBindVertexArray(m_vVertexArray[OBJECT::O_CUBE]);
                 glDrawElements(GL_TRIANGLES, cubeElementCount, GL_UNSIGNED_INT, 0);
             glBindVertexArray(0);
+            glDisable(GL_TEXTURE_2D);
+            glUniform1i(locType, 0);
         pop();
     pop();
+    glUseProgram(0);
 }
 
 void CSceneHandler::destroy()
 {
-    glUseProgram(0);
-
-    glDeleteBuffers(1, &m_nCubeElementBuffer);
-    glDeleteBuffers(1, &m_nCubeArrayBuffer);
-    glDeleteVertexArrays(1, &m_nCubeVertexArray);
-
-    glDeleteBuffers(1, &m_nElementBuffer);
-    glDeleteBuffers(1, &m_nArrayBuffer);
-    glDeleteVertexArrays(1, &m_nVertexArray);
+    glDeleteBuffers(BUFFER::B_MAX, &m_vCubeBuffer[0]);
+    glDeleteBuffers(BUFFER::B_MAX, &m_vGridBuffer[0]);
+    glDeleteVertexArrays(OBJECT::O_MAX, &m_vVertexArray[0]);
     glDeleteProgram(m_nProgram);
+
+    m_sTexture->unloadTexture(1);
 }
 
 void CSceneHandler::push()
