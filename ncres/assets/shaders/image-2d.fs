@@ -1,17 +1,17 @@
 #version 150
 precision highp float;
 
-in vec2 uv;
-
 uniform sampler2D texturesampler;
 uniform vec4 diffuse;
-uniform int type;
+uniform bool textured;
+
+varying vec2 tc;
 
 out vec4 fragcolor;
 
 void main() {
-    if (type == 1) {
-        fragcolor = texture(texturesampler, uv);
+    if (textured) {
+        fragcolor = texture(texturesampler, tc);
     } else {
         fragcolor = diffuse;
     }

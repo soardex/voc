@@ -19,16 +19,19 @@
 #ifndef _COMMONS_H_
 #define _COMMONS_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include <assert.h>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
+#include <cassert>
 
 #include <fstream>
 #include <map>
 #include <stack>
 #include <string>
 #include <vector>
+#include <memory>
+
+#include <sys/time.h>
 
 #include <GL/glew.h>
 #include <SDL2/SDL.h>
@@ -37,5 +40,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_precision.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include <lua.hpp>
 
 #endif /* end of include guard: _COMMONS_H_ */

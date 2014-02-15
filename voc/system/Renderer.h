@@ -15,31 +15,28 @@
  * Copyright (C) IOIO, 2014
  */
 
-#ifndef EMPERORSYSTEM_H
-#define EMPERORSYSTEM_H
+#ifndef RENDERER_H
+#define RENDERER_H
 
-#include "Commons.h"
+#include "../Commons.h"
 
-#include "system/Renderer.h"
-
-class CEmperorSystem
+class CRenderer
 {
 public:
-    explicit CEmperorSystem();
-    ~CEmperorSystem();
+    explicit CRenderer();
+    ~CRenderer();
 
     void init();
+    void update();
     void destroy();
 
-protected:
-    void initialiazeRenderer();
-
-    unsigned int getRealTime() const;
+    SDL_Window* getWindowContext() const { return m_psWindow; }
+    SDL_GLContext getOpenGLContext() const { return m_sContext; }
 
 private:
-    CRenderer *m_psRenderer;
-
+    SDL_Window *m_psWindow;
+    SDL_GLContext m_sContext;
 };
 
-#endif /* end of include guard: EMPERORSYSTEM_H */
+#endif /* end of include guard: RENDERER_H */
 

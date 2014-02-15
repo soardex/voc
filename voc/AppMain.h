@@ -15,13 +15,18 @@
  * Copyright (C) IOIO, 2014
  */
 
-
-#ifndef _APPMAIN_H_
-#define _APPMAIN_H_
-
 #include "Commons.h"
 #include "EmperorSystem.h"
 
-extern CEmperorSystem *g_sCES;
+class CAppMain
+{
+public:
+    CAppMain();
+    ~CAppMain();
 
-#endif /* end of include guard: _APPMAIN_H_ */
+    void run();
+
+private:
+    CEmperorSystem *m_psSystem;
+};
+

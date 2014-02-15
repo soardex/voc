@@ -15,11 +15,46 @@
  * Copyright (C) IOIO, 2014
  */
 
+#ifndef EVENTHANDLER_H
+#define EVENTHANDLER_H
 
+#include "../Commons.h"
 
-#ifndef _SECOND_LIFE_H_
-#define _SECOND_LIFE_H_
+class CEventHandler
+{
+public:
+    enum E_SPECKEY
+    {
+        E_SK_UP = 0,
+        E_SK_DN,
+        E_SK_LT,
+        E_SK_RT,
 
-#include "Commons.h"
+        E_SK_W,
+        E_SK_S,
+        E_SK_A,
+        E_SK_D,
 
-#endif /* end of include guard: _SECOND_LIFE_H_ */
+        E_SK_PGUP,
+        E_SK_PGDN,
+
+        E_SK_MAX
+    };
+
+    explicit CEventHandler();
+    ~CEventHandler();
+
+    void init();
+    void destroy();
+    void update();
+
+    bool getSpectatorKey(E_SPECKEY key) const { return m_bSpectatorKey[key]; }
+
+private:
+    SDL_Event m_sEvent;
+
+    bool m_bSpectatorKey[E_SK_MAX];
+};
+
+#endif /* end of include guard: EVENTHANDLER_H */
+

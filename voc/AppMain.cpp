@@ -15,20 +15,44 @@
  * Copyright (C) IOIO, 2014
  */
 
-
 #include "AppMain.h"
 
-CEmperorSystem *g_sCES = NULL;
+CAppMain::CAppMain()
+{
+    m_psSystem = new CEmperorSystem();
+    if (!m_psSystem)
+    {
+        fprintf(stderr, "[ERR] Application Error: Unable to initialize Emperor System.");
+        exit(1);
+    }
+}
+
+CAppMain::~CAppMain()
+{
+    if (m_psSystem)
+    {
+        m_psSystem->destroy();
+
+        delete m_psSystem;
+        m_psSystem = nullptr;
+    }
+}
+
+void CAppMain::run()
+{
+}
 
 int main()
 {
-    g_sCES = new CEmperorSystem();
-    if (g_sCES)
-        g_sCES->run();
+    CAppMain *voc = new CAppMain();
+    if (voc)
+    {
+        voc->run();
 
-    delete g_sCES;
-    g_sCES = NULL;
+        delete voc;
+        voc = nullptr;
+    }
 
-	return 0;
+    return 0;
 }
 

@@ -15,20 +15,30 @@
  * Copyright (C) IOIO, 2014
  */
 
+#include "ScriptManager.h"
 
-#ifndef _GEOMETRY_UTILS_H_
-#define _GEOMETRY_UTILS_H_
-
-#include "../Commons.h"
-
-class CGeometryUtils
+CScriptManager::CScriptManager()
+    : m_psScriptState(nullptr)
 {
-public:
-    CGeometryUtils *inst();
-    ~CGeometryUtils();
+}
 
-protected:
-    CGeometryUtils();
-};
+CScriptManager::~CScriptManager()
+{
+    m_psScriptState = nullptr;
+}
 
-#endif /* end of include guard: _GEOMETRY_UTILS_H_ */
+void CScriptManager::init()
+{
+    m_psScriptState = lua_open();
+    luaopen_base(m_psScriptState);
+    luaopen_table(m_psScriptState);
+    luaopen_string(m_psScriptState);
+    luaopen_math(m_psScriptState);
+    luaL_openlibs(m_psScriptState);
+}
+
+void CScriptManager::destroy()
+{
+    lua_close(m_psScriptState);
+}
+

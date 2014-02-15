@@ -15,4 +15,23 @@
  * Copyright (C) IOIO, 2014
  */
 
+#ifndef SCRIPTMANAGER_H
+#define SCRIPTMANAGER_H
+
+#include "../Commons.h"
+
+class CScriptManager
+{
+public:
+    explicit CScriptManager();
+    ~CScriptManager();
+
+    void init();
+    void destroy();
+
+private:
+    lua_State *m_psScriptState;
+};
+
+#endif /* end of include guard: SCRIPTMANAGER_H */
 

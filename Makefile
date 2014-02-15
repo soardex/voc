@@ -30,15 +30,11 @@ SRCDIR=voc
 SRCS=\
 	$(SRCDIR)/AppMain.cpp \
 	$(SRCDIR)/EmperorSystem.cpp \
-	$(SRCDIR)/SecondLife.cpp \
+	$(SRCDIR)/imported/tinyobjloader/tiny_obj_loader.cpp \
 	$(SRCDIR)/utils/Helpers.cpp \
-	$(SRCDIR)/system/AssetsHandler.cpp \
-	$(SRCDIR)/system/InputHandler.cpp \
-	$(SRCDIR)/system/PhysicsHandler.cpp \
-	$(SRCDIR)/system/RenderHandler.cpp \
-	$(SRCDIR)/system/SceneHandler.cpp \
-	$(SRCDIR)/system/SoundHandler.cpp \
-	$(SRCDIR)/system/TimeHandler.cpp
+	$(SRCDIR)/system/Renderer.cpp \
+	$(SRCDIR)/system/EventHandler.cpp \
+	$(SRCDIR)/system/ScriptManager.cpp
 
 OBJS=$(addprefix $(OBJDIR)/, $(SRCS:.cpp=.o))
 LIBS=-lm -lSDL2 -lGLEW -lGL -lGLU -lfreeimage -llua -lassimp \
@@ -76,6 +72,8 @@ directories:
 	$(MKDIR_P) $(OBJDIR)/$(SRCDIR)
 	$(MKDIR_P) $(OBJDIR)/$(SRCDIR)/utils
 	$(MKDIR_P) $(OBJDIR)/$(SRCDIR)/system
+	$(MKDIR_P) $(OBJDIR)/$(SRCDIR)/imported
+	$(MKDIR_P) $(OBJDIR)/$(SRCDIR)/imported/tinyobjloader
 	$(MKDIR_P) $(DEPDIR)
 	$(MKDIR_P) $(BINDIR)
 	$(MKDIR_P) $(RESDIR)

@@ -133,7 +133,7 @@ namespace helpers
         glGetIntegerv(GL_MAJOR_VERSION, &majorVersion);
         glGetIntegerv(GL_MINOR_VERSION, &minorVersion);
 
-        printf("OpenGL Version %d.%d\n", majorVersion, minorVersion);
+        printf("[INFO] OpenGL Version %d.%d\n", majorVersion, minorVersion);
 
         return true;
     }
