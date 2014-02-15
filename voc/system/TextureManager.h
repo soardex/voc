@@ -15,48 +15,33 @@
  * Copyright (C) IOIO, 2014
  */
 
-#ifndef EVENTHANDLER_H
-#define EVENTHANDLER_H
+#ifndef TEXTUREMANAGER_H
+#define TEXTUREMANAGER_H
 
 #include "../Commons.h"
 
-class CEventHandler
+class CTextureManager
 {
 public:
-    enum ESpecKey
-    {
-        E_SK_UP = 0,
-        E_SK_DN,
-        E_SK_LT,
-        E_SK_RT,
+    explicit CTextureManager();
+    virtual ~CTextureManager();
 
-        E_SK_W,
-        E_SK_S,
-        E_SK_A,
-        E_SK_D,
+    bool load(const char *filename, const unsigned int textureId,
+            GLenum imageFormat = GL_RGB,
+            GLint internalFormat = GL_RGB,
+            GLint level = 0,
+            GLint border = 0);
 
-        E_SK_PGUP,
-        E_SK_PGDN,
+    bool unloadTexture(const unsigned int textureId);
+    bool bindTexture(const unsigned int textureId);
+    void unloadAllTextures();
 
-        E_SK_MAX
-    };
+protected:
+    CTextureManager(const CTextureManager& tm);
+    CTextureManager& operator=(const CTextureManager& tm);
 
-    explicit CEventHandler();
-    ~CEventHandler();
-
-    void init();
-    void destroy();
-    void update();
-
-    bool getSpectatorKey(ESpecKey key) const { return m_bSpectatorKey[key]; }
-    bool getRunningState() const { return m_bRunningState; }
-
-private:
-    SDL_Event m_sEvent;
-
-    bool m_bSpectatorKey[E_SK_MAX];
-    bool m_bRunningState;
+    std::map<unsigned int, GLuint> m_mTextureId;
 };
 
-#endif /* end of include guard: EVENTHANDLER_H */
+#endif /* end of include guard: TEXTUREMANAGER_H */
 

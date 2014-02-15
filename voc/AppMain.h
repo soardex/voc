@@ -17,6 +17,9 @@
 
 #include "Commons.h"
 #include "EmperorSystem.h"
+#include "SecondLife.h"
+
+#include "utils/Helpers.h"
 
 class CAppMain
 {
@@ -28,5 +31,6 @@ public:
 
 private:
     CEmperorSystem *m_psSystem;
+    CSecondLife *m_psScene;
 };
 

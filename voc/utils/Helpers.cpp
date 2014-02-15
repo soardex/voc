@@ -62,7 +62,7 @@ namespace helpers
         GLint result = GL_FALSE;
         glGetShaderiv(shader, GL_COMPILE_STATUS, &result);
 
-        fprintf(stdout, "Compiling shader: %s\n", file.c_str());
+        fprintf(stdout, "[INF] Compiling shader: %s\n", file.c_str());
 
         int infoLength;
         glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &infoLength);
@@ -84,7 +84,7 @@ namespace helpers
         GLint result = GL_FALSE;
         glGetProgramiv(program, GL_LINK_STATUS, &result);
 
-        fprintf(stdout, "Linking program...\n");
+        fprintf(stdout, "[INF] Linking program...\n");
 
         int infoLength;
         glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLength);
@@ -110,7 +110,7 @@ namespace helpers
 
         if (result == GL_FALSE)
         {
-            fprintf(stdout, "Validate program\n");
+            fprintf(stdout, "[INF] Validate program\n");
 
             int infoLength;
             glGetProgramiv(program, GL_INFO_LOG_LENGTH, &infoLength);
@@ -133,7 +133,7 @@ namespace helpers
         glGetIntegerv(GL_MAJOR_VERSION, &majorVersion);
         glGetIntegerv(GL_MINOR_VERSION, &minorVersion);
 
-        printf("[INFO] OpenGL Version %d.%d\n", majorVersion, minorVersion);
+        printf("[INF] OpenGL Version %d.%d\n", majorVersion, minorVersion);
 
         return true;
     }
@@ -146,7 +146,7 @@ namespace helpers
             if (std::string((char const *)glGetStringi(GL_EXTENSIONS, i)) == std::string(ext))
                 return true;
 
-        printf("Failed to find extension: \"%s\"\n", ext);
+        printf("[ERR] Failed to find extension: \"%s\"\n", ext);
         return false;
     }
 }

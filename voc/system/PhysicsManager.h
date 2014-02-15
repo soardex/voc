@@ -15,37 +15,29 @@
  * Copyright (C) IOIO, 2014
  */
 
+#ifndef PHYSICSMANAGER_H
+#define PHYSICSMANAGER_H
 
-#ifndef _COMMONS_H_
-#define _COMMONS_H_
+#include "../Commons.h"
 
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
-#include <cassert>
+class CPhysicsManager
+{
+public:
+    explicit CPhysicsManager();
+    ~CPhysicsManager();
 
-#include <fstream>
-#include <map>
-#include <stack>
-#include <string>
-#include <vector>
-#include <memory>
+    void init();
+    void destroy();
+    void update();
 
-#include <sys/time.h>
+    btDiscreteDynamicsWorld* getDynamicsWorld() const { return m_psWorld; }
 
-#include <GL/glew.h>
-#include <SDL2/SDL.h>
+private:
+    btBroadphaseInterface *m_psBroadphase;
+    btDefaultCollisionConfiguration *m_psCollisionConfiguration;
+    btCollisionDispatcher *m_psDispatcher;
+    btSequentialImpulseConstraintSolver *m_psSolver;
+    btDiscreteDynamicsWorld *m_psWorld;
+};
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_precision.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include <lua.hpp>
-#include <FreeImage.h>
-
-#include <btBulletDynamicsCommon.h>
-#include <btBulletCollisionCommon.h>
-#include <BulletCollision/CollisionDispatch/btGhostObject.h>
-
-#endif /* end of include guard: _COMMONS_H_ */
+#endif /* end of include guard: PHYSICSMANAGER_H */

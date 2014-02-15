@@ -21,6 +21,10 @@
 #include "Commons.h"
 
 #include "system/Renderer.h"
+#include "system/EventHandler.h"
+#include "system/ScriptManager.h"
+#include "system/TextureManager.h"
+#include "system/PhysicsManager.h"
 
 class CEmperorSystem
 {
@@ -30,14 +34,29 @@ public:
 
     void init();
     void destroy();
+    void update();
+
+    CRenderer* getRenderer() const { return m_psRenderer; }
+    CEventHandler* getEventHandler() const { return m_psEventHandler; }
+    CScriptManager* getScriptManager() const { return m_psScriptManager; }
+    CTextureManager* getTextureManager() const { return m_psTextureManager; }
+    CPhysicsManager* getPhysicsManager() const { return m_psPhysicsManager; }
 
 protected:
-    void initialiazeRenderer();
+    void initializeRenderer();
+    void initializeEventHandler();
+    void initializeScriptManager();
+    void initializeTextureManager();
+    void initializePhysicsManager();
 
     unsigned int getRealTime() const;
 
 private:
     CRenderer *m_psRenderer;
+    CEventHandler *m_psEventHandler;
+    CScriptManager *m_psScriptManager;
+    CTextureManager *m_psTextureManager;
+    CPhysicsManager *m_psPhysicsManager;
 
 };
 

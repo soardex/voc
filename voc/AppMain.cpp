@@ -18,6 +18,8 @@
 #include "AppMain.h"
 
 CAppMain::CAppMain()
+    : m_psSystem(nullptr),
+    m_psScene(nullptr)
 {
     m_psSystem = new CEmperorSystem();
     if (!m_psSystem)
@@ -25,10 +27,29 @@ CAppMain::CAppMain()
         fprintf(stderr, "[ERR] Application Error: Unable to initialize Emperor System.");
         exit(1);
     }
+
+    m_psSystem->init();
+
+    m_psScene = new CSecondLife(m_psSystem);
+    if (!m_psScene)
+    {
+        fprintf(stderr, "[ERR] Application Error: Unable to initialize scene.");
+        exit(1);
+    }
+
+    m_psScene->init();
 }
 
 CAppMain::~CAppMain()
 {
+    if (m_psScene)
+    {
+        m_psScene->destroy();
+
+        delete m_psScene;
+        m_psScene = nullptr;
+    }
+
     if (m_psSystem)
     {
         m_psSystem->destroy();
@@ -40,6 +61,12 @@ CAppMain::~CAppMain()
 
 void CAppMain::run()
 {
+    helpers::checkGLVersion();
+    while (m_psSystem->getEventHandler()->getRunningState())
+    {
+        m_psSystem->update();
+        m_psScene->update();
+    }
 }
 
 int main()
