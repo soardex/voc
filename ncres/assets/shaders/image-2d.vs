@@ -2,16 +2,22 @@
 
 attribute vec3 position;
 attribute vec2 texcoord;
-attribute float time;
+
+uniform float time;
 
 uniform mat4 modelview;
 uniform mat4 projection;
 
-varying vec2 tc;
+varying vec2 frag_texcoord;
+varying vec3 frag_diffuse;
+varying vec3 frag_ambient;
+varying vec3 frag_specular;
+varying vec3 frag_emission;
 
 void main() {
     vec4 transformed = modelview * vec4(position, 1.0);
     gl_Position = projection * transformed;
-    tc = texcoord;
+
+    frag_texcoord = texcoord;
 }
 

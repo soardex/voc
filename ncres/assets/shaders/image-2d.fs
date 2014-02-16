@@ -2,18 +2,19 @@
 precision highp float;
 
 uniform sampler2D texturesampler;
-uniform vec4 diffuse;
 uniform bool textured;
 
-varying vec2 tc;
-
-out vec4 fragcolor;
+varying vec2 frag_texcoord;
+varying vec3 frag_diffuse;
+varying vec3 frag_ambient;
+varying vec3 frag_specular;
+varying vec3 frag_emission;
 
 void main() {
     if (textured) {
-        fragcolor = texture(texturesampler, tc);
+        gl_FragColor = texture(texturesampler, frag_texcoord);
     } else {
-        fragcolor = diffuse;
+        gl_FragColor = vec4(frag_diffuse, 1.0);
     }
 }
 

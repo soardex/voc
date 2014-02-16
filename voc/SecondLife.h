@@ -34,6 +34,8 @@ public:
     void update();
 
 protected:
+    void loadWaveObjFile(char const *file, char const *path, bool visible);
+
     void push();
     void pop();
 
@@ -52,6 +54,26 @@ private:
         glm::mat4 view;
         glm::mat4 model;
 
+        struct
+        {
+            glm::mat4 perspective;
+            glm::mat4 orthographic;
+        } constant;
+
+        enum EProjection
+        {
+            PERSPECTIVE,
+            ORTHOGRAPHIC
+        };
+
+        void setProjection(EProjection e)
+        {
+            if (e == PERSPECTIVE)
+                projection = constant.perspective;
+            else
+                projection = constant.orthographic;
+        }
+
         glm::mat4 getModelView() const { return view * model; }
         glm::mat4 getModelView(glm::mat4 const &v) { return v * model; }
     } m_sMvp;
@@ -65,11 +87,10 @@ private:
         float angle;
         float look;
 
-        SCamera()
-            : angle(0.0), look(0.0)
+        SCamera() : pos(1.0), eye(0.0), up(0.0), angle(0.0), look(0.0)
         {
-            pos = glm::vec3(0.0, 5.0, 0.0);
-            eye = glm::vec3(0.0, -1.0, 0.0);
+            pos = glm::vec3(0.0, 0.0, 5.0);
+            eye = glm::vec3(0.0, 0.0, -1.0);
             up = glm::vec3(0.0, 1.0, 0.0);
         }
     } m_sCamera;
@@ -118,9 +139,57 @@ private:
 
     struct SMesh
     {
+        enum
+        {
+            VERTEX,
+            ELEMENT,
+
+            MAX
+        };
+
         GLuint vao;
-        GLuint count;
+        GLenum type;
+        GLint count;
+
+        std::vector<GLuint> buffers;
+
+        struct
+        {
+            glm::vec3 diffuse;
+            glm::vec3 ambient;
+            glm::vec3 emission;
+            glm::vec3 specular;
+
+            std::string diffuse_tex;
+            std::string ambient_tex;
+            std::string specular_tex;
+            std::string normal_tex;
+
+            float shininess;
+            float ior;
+        } materials;
+
+        struct
+        {
+            bool textured;
+        } options;
+
+        SMesh() : buffers(MAX)
+        {
+            vao = 0;
+            count = 0;
+        }
     };
+
+    struct SMeshNode
+    {
+        std::string name;
+        bool visible;
+
+        std::vector<SMesh> mesh;
+    };
+
+    std::vector<SMeshNode> m_vMesh;
 
     std::stack<glm::mat4, std::vector<glm::mat4> > m_vStack;
     glm::mat4 m_sCurrentMatrix;

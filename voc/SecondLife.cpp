@@ -17,6 +17,8 @@
 
 #include "SecondLife.h"
 
+#include "imported/tinyobjloader/tiny_obj_loader.h"
+
 CSecondLife::CSecondLife(CEmperorSystem *ces)
     : m_psSystem(ces),
     m_sCurrentMatrix(1.0)
@@ -53,6 +55,9 @@ void CSecondLife::init()
         glDeleteShader(vertShader);
         glDeleteShader(fragShader);
 
+        glBindAttribLocation(m_sShader.program, helpers::semantic::attr::POSITION, "position");
+        glBindAttribLocation(m_sShader.program, helpers::semantic::attr::TEXCOORD, "texcoord");
+
         glLinkProgram(m_sShader.program);
         validated = helpers::checkProgram(m_sShader.program);
     }
@@ -63,10 +68,80 @@ void CSecondLife::init()
         m_sShader.uniforms.mvp.projection = m_sShader.getUniformLocation("projection");
     }
 
+    //! populate grid object
+    {
+        SMeshNode meshNode;
+        SMesh mesh;
+        std::vector<SMesh> holder;
+
+        GLsizei elementCount;
+        GLsizeiptr elementSize;
+        std::vector<glm::uint32> elementData;
+
+        GLsizei vertexCount;
+        GLsizeiptr vertexSize;
+        std::vector<glm::vec3> vertexData;
+
+        float extent = 30.0, step = 1.0, h = -0.6;
+        for (int line = -extent; line <= extent; line += step)
+        {
+            vertexData.push_back(glm::vec3(line, h, extent));
+            vertexData.push_back(glm::vec3(line, h, -extent));
+
+            vertexData.push_back(glm::vec3(extent, h, line));
+            vertexData.push_back(glm::vec3(-extent, h, line));
+        }
+
+        vertexCount = vertexData.size();
+        vertexSize = vertexCount * sizeof(glm::vec3);
+
+        elementCount = vertexCount;
+        elementSize = elementCount * sizeof(glm::uint32);
+        for (int i = 0; i < elementCount; i++)
+            elementData.push_back(i);
+
+        mesh.count = elementCount;
+
+        glGenVertexArrays(1, &mesh.vao);
+
+        glGenBuffers(SMesh::MAX, &mesh.buffers[0]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+        glBufferData(GL_ARRAY_BUFFER, vertexSize, &vertexData[0], GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, &elementData[0], GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        glBindVertexArray(mesh.vao);
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+            glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+            glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
+        glBindVertexArray(0);
+
+        mesh.type = GL_LINES;
+        holder.push_back(mesh);
+
+        meshNode.name = "grid";
+        meshNode.mesh = holder;
+        meshNode.visible = true;
+        m_vMesh.push_back(meshNode);
+    }
+
+    //loadWaveObjFile("./build/assets/models/cube.obj", "./build/assets/models/", true);
+
     glViewport(0, 0, m_sCreationParams.width, m_sCreationParams.height);
 
-    m_sMvp.projection = glm::perspective(45.0, double(m_sCreationParams.width /
-            m_sCreationParams.height), 0.1, 750.0);
+    m_sMvp.constant.perspective = glm::perspective(45.0,
+            double(m_sCreationParams.width / m_sCreationParams.height),
+            0.1, 750.0);
+    m_sMvp.constant.orthographic = glm::ortho(0, m_sCreationParams.width,
+            m_sCreationParams.height, 0);
+
+    m_sMvp.setProjection(SModelViewProjection::PERSPECTIVE);
     m_sMvp.model = glm::mat4(1.0);
     m_sMvp.view = glm::lookAt( glm::vec3(0.0, 0.0, 3.0),
             glm::vec3(0.0, 0.0, -5.0),
@@ -80,10 +155,30 @@ void CSecondLife::init()
 
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     glFrontFace(GL_CCW);
+
+    glUseProgram(m_sShader.program);
+    glUniformMatrix4fv(m_sShader.uniforms.mvp.modelview, 1, GL_FALSE, &m_sMvp.getModelView()[0][0]);
+    glUniformMatrix4fv(m_sShader.uniforms.mvp.projection, 1, GL_FALSE, &m_sMvp.projection[0][0]);
+    glUseProgram(0);
 }
 
 void CSecondLife::destroy()
 {
+    std::vector<SMeshNode>::iterator it = m_vMesh.begin();
+    for (; it != m_vMesh.end(); it++)
+    {
+        std::vector<SMesh>::iterator n = it->mesh.begin();
+        for (; n != it->mesh.end(); n++)
+        {
+            glDeleteBuffers(SMesh::MAX, &n->buffers[0]);
+            glDeleteVertexArrays(1, &n->vao);
+        }
+
+        it->mesh.clear();
+    }
+
+    m_vMesh.clear();
+    glDeleteProgram(m_sShader.program);
 }
 
 void CSecondLife::update()
@@ -130,6 +225,11 @@ void CSecondLife::update()
         m_sCamera.eye.y = sin(m_sCamera.look);
     }
 
+    glUseProgram(m_sShader.program);
+    glUniformMatrix4fv(m_sShader.uniforms.mvp.modelview, 1, GL_FALSE, &m_sMvp.getModelView(view)[0][0]);
+    glUniformMatrix4fv(m_sShader.uniforms.mvp.projection, 1, GL_FALSE, &m_sMvp.projection[0][0]);
+    glUseProgram(0);
+
     m_sCurrentMatrix = m_sMvp.getModelView(view);
 
     glClearColor(0.0, 0.7, 0.7, 1.0);
@@ -138,7 +238,21 @@ void CSecondLife::update()
 
     glUseProgram(m_sShader.program);
     push();
-
+        //! recursive rendering
+        std::vector<SMeshNode>::iterator it = m_vMesh.begin();
+        for (; it != m_vMesh.end(); it++)
+        {
+            if (it->visible)
+            {
+                std::vector<SMesh>::iterator n = it->mesh.begin();
+                for (; n != it->mesh.end(); n++)
+                {
+                    glBindVertexArray(n->vao);
+                        glDrawElements(n->type, n->count, GL_UNSIGNED_INT, 0);
+                    glBindVertexArray(0);
+                }
+            }
+        }
     pop();
     glUseProgram(0);
 }
@@ -152,5 +266,76 @@ void CSecondLife::pop()
 {
     m_sCurrentMatrix = m_vStack.top();
     m_vStack.pop();
+}
+
+void CSecondLife::loadWaveObjFile(char const *file, char const *path, bool visible)
+{
+    std::vector<tinyobj::shape_t> shapes;
+    std::string err = tinyobj::LoadObj(shapes, file, path);
+
+    if (!err.empty())
+        fprintf(stderr, "[ERR] Scene Error: Unable to load obj file.");
+
+    SMeshNode meshNode;
+    std::vector<SMesh> holder;
+    for (int i = 0; i < shapes.size(); i++)
+    {
+        SMesh mesh;
+
+        GLsizei elementCount;
+        GLsizeiptr elementSize;
+        std::vector<glm::uint32> elementData;
+
+        GLsizei vertexCount;
+        GLsizeiptr vertexSize;
+        std::vector<glm::vec3> vertexData;
+
+        assert((shapes[i].mesh.positions.size() % 3) == 0);
+        for (int v = 0; v < shapes[i].mesh.positions.size() / 3; v++)
+        {
+            vertexData.push_back(glm::vec3(
+                shapes[i].mesh.positions[3 * v + 0],
+                shapes[i].mesh.positions[3 * v + 1],
+                shapes[i].mesh.positions[3 * v + 2]));
+        }
+
+        vertexCount = vertexData.size();
+        vertexSize = vertexCount * sizeof(glm::vec3);
+
+        for (int f = 0; f < shapes[i].mesh.indices.size(); f++)
+            elementData.push_back(shapes[i].mesh.indices[f]);
+
+        elementCount = elementData.size();
+        elementSize = elementCount * sizeof(glm::uint32);
+        mesh.count = elementCount;
+
+        glGenVertexArrays(1, &mesh.vao);
+
+        glGenBuffers(SMesh::MAX, &mesh.buffers[0]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+        glBufferData(GL_ARRAY_BUFFER, vertexSize, &vertexData[0], GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, &elementData[0], GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        glBindVertexArray(mesh.vao);
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+            glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+            glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
+        glBindVertexArray(0);
+
+        mesh.type = GL_TRIANGLES;
+        holder.push_back(mesh);
+    }
+
+    meshNode.name = file;
+    meshNode.mesh = holder;
+    meshNode.visible = visible;
+    m_vMesh.push_back(meshNode);
 }
 
