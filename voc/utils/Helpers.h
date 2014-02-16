@@ -115,9 +115,12 @@ namespace helpers
     GLuint createShader(GLenum type, std::string const &source);
     bool checkShader(GLuint shader, std::string const &file);
     bool checkProgram(GLuint program);
+    bool checkExtension(char const *ext);
+    bool checkGLVersion();
     bool validateProgram(GLuint program);
 
-    bool checkGLVersion();
+    std::map<std::string, GLint> getActiveAttributes(GLuint program);
+    std::map<std::string, GLint> getActiveUniforms(GLuint program);
 }
 
 #endif /* end of include guard: _HELPERS_H_ */

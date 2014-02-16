@@ -43,7 +43,7 @@ OBJS=$(addprefix $(OBJDIR)/, $(SRCS:.cpp=.o))
 LIBS=-lm -lSDL2 -lGLEW -lGL -lGLU -lfreeimage -llua -lassimp \
 	 -lLinearMath -lBulletDynamics -lBulletCollision -lBulletSoftBody
 
-CFLAGS=-std=c++0x -g -Wall -Wextra -pedantic $(INCDIR)
+CFLAGS=-std=c++0x -g -Wall -Wextra -pedantic -fopenmp $(INCDIR)
 LFLAGS=$(LIBDIR) $(LIBS)
 
 all: directories populate $(TARGET)

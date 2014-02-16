@@ -64,8 +64,7 @@ void CSecondLife::init()
 
     if (validated)
     {
-        m_sShader.uniforms.mvp.modelview = m_sShader.getUniformLocation("modelview");
-        m_sShader.uniforms.mvp.projection = m_sShader.getUniformLocation("projection");
+        m_sShader.uniforms = helpers::getActiveUniforms(m_sShader.program);
     }
 
     //! populate grid object
@@ -157,8 +156,8 @@ void CSecondLife::init()
     glFrontFace(GL_CCW);
 
     glUseProgram(m_sShader.program);
-    glUniformMatrix4fv(m_sShader.uniforms.mvp.modelview, 1, GL_FALSE, &m_sMvp.getModelView()[0][0]);
-    glUniformMatrix4fv(m_sShader.uniforms.mvp.projection, 1, GL_FALSE, &m_sMvp.projection[0][0]);
+    glUniformMatrix4fv(m_sShader.uniforms["modelview"], 1, GL_FALSE, &m_sMvp.getModelView()[0][0]);
+    glUniformMatrix4fv(m_sShader.uniforms["projection"], 1, GL_FALSE, &m_sMvp.projection[0][0]);
     glUseProgram(0);
 }
 
@@ -226,8 +225,8 @@ void CSecondLife::update()
     }
 
     glUseProgram(m_sShader.program);
-    glUniformMatrix4fv(m_sShader.uniforms.mvp.modelview, 1, GL_FALSE, &m_sMvp.getModelView(view)[0][0]);
-    glUniformMatrix4fv(m_sShader.uniforms.mvp.projection, 1, GL_FALSE, &m_sMvp.projection[0][0]);
+    glUniformMatrix4fv(m_sShader.uniforms["modelview"], 1, GL_FALSE, &m_sMvp.getModelView(view)[0][0]);
+    glUniformMatrix4fv(m_sShader.uniforms["projection"], 1, GL_FALSE, &m_sMvp.projection[0][0]);
     glUseProgram(0);
 
     m_sCurrentMatrix = m_sMvp.getModelView(view);

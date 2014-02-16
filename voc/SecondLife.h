@@ -116,25 +116,8 @@ private:
     {
         GLuint program;
 
-        struct 
-        {
-            struct
-            {
-                GLint modelview;
-                GLint projection;
-            } mvp;
-
-            struct
-            {
-                GLint diffuse;
-                GLint textured;
-            } options;
-        } uniforms;
-
-        GLint getUniformLocation(char const *name)
-        {
-            return glGetUniformLocation(program, name);
-        }
+        std::map<std::string, GLint> attribs;
+        std::map<std::string, GLint> uniforms;
     } m_sShader;
 
     struct SMesh

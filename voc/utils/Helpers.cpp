@@ -149,5 +149,49 @@ namespace helpers
         printf("[ERR] Failed to find extension: \"%s\"\n", ext);
         return false;
     }
+
+    std::map<std::string, GLint> getActiveUniforms(GLuint program)
+    {
+        std::map<std::string, GLint> uniforms;
+
+        int total = -1;
+        glGetProgramiv(program, GL_ACTIVE_UNIFORMS, &total);
+        
+        int bufsize;
+        glGetProgramiv(program, GL_ACTIVE_UNIFORM_MAX_LENGTH, &bufsize);
+        for (int i = 0; i < total; i++)
+        {
+            int length = -1, size = -1;
+            GLenum type = GL_ZERO;
+
+            std::vector<char> name(bufsize);
+            glGetActiveUniform(program, i, bufsize, &length, &size, &type, &name[0]);
+            uniforms[&name[0]] = glGetUniformLocation(program, &name[0]);
+        }
+
+        return uniforms;
+    }
+
+    std::map<std::string, GLint> getActiveAttributes(GLuint program)
+    {
+        std::map<std::string, GLint> attrib;
+
+        int total = -1;
+        glGetProgramiv(program, GL_ACTIVE_ATTRIBUTES, &total);
+        
+        int bufsize;
+        glGetProgramiv(program, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &bufsize);
+        for (int i = 0; i < total; i++)
+        {
+            int length = -1, size = -1;
+            GLenum type = GL_ZERO;
+
+            std::vector<char> name(bufsize);
+            glGetActiveAttrib(program, i, bufsize, &length, &size, &type, &name[0]);
+            attrib[&name[0]] = glGetAttribLocation(program, &name[0]);
+        }
+
+        return attrib;
+    }
 }
 
