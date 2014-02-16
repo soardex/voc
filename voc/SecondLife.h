@@ -34,7 +34,7 @@ public:
     void update();
 
 protected:
-    void loadWaveObjFile(char const *file, char const *path, bool visible);
+    void loadWaveObjFile(char const *file, char const *path, bool visible, float offset = 0.0);
 
     void push();
     void pop();
@@ -131,8 +131,11 @@ private:
         };
 
         GLuint vao;
+        GLuint tex;
         GLenum type;
         GLint count;
+
+        bool textured;
 
         std::vector<GLuint> buffers;
 
@@ -160,7 +163,11 @@ private:
         SMesh() : buffers(MAX)
         {
             vao = 0;
+            tex = 0;
+            type = 0;
             count = 0;
+
+            textured = false;
         }
     };
 

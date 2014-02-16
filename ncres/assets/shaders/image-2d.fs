@@ -12,7 +12,8 @@ varying vec3 frag_emission;
 
 void main() {
     if (textured) {
-        gl_FragColor = texture(texturesampler, frag_texcoord);
+        vec4 color = texture(texturesampler, frag_texcoord);
+        gl_FragColor = color;
     } else {
         gl_FragColor = vec4(frag_diffuse, 1.0);
     }

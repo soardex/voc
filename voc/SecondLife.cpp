@@ -63,9 +63,7 @@ void CSecondLife::init()
     }
 
     if (validated)
-    {
         m_sShader.uniforms = helpers::getActiveUniforms(m_sShader.program);
-    }
 
     //! populate grid object
     {
@@ -130,10 +128,200 @@ void CSecondLife::init()
         m_vMesh.push_back(meshNode);
     }
 
-    //loadWaveObjFile("./build/assets/models/cube.obj", "./build/assets/models/", true);
+    struct vertv3v2
+    {
+        glm::vec3 position;
+        glm::vec2 texcoord;
+
+        vertv3v2(glm::vec3 const &p, glm::vec2 const &t)
+            : position(p), texcoord(t)
+        {
+        }
+    };
+
+    //! populate skybox object
+    {
+        float scale = 250.0;
+        SMeshNode meshNode;
+        vertv3v2 vertexData[6][4] =
+        {
+            {
+                //! front
+                vertv3v2(glm::vec3(-scale, -scale, -scale), glm::vec2(0, 0)),
+                vertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(1, 0)),
+                vertv3v2(glm::vec3( scale,  scale, -scale), glm::vec2(1, 1)),
+                vertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(0, 1))
+            },
+            {
+                //! left
+                vertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(0, 0)),
+                vertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(1, 0)),
+                vertv3v2(glm::vec3( scale,  scale,  scale), glm::vec2(1, 1)),
+                vertv3v2(glm::vec3( scale,  scale, -scale), glm::vec2(0, 1))
+            },
+            {
+                //! back
+                vertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(0, 0)),
+                vertv3v2(glm::vec3(-scale, -scale,  scale), glm::vec2(1, 0)),
+                vertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(1, 1)),
+                vertv3v2(glm::vec3( scale,  scale,  scale), glm::vec2(0, 1))
+            },
+            {
+                //! right
+                vertv3v2(glm::vec3(-scale, -scale,  scale), glm::vec2(0, 0)),
+                vertv3v2(glm::vec3(-scale, -scale, -scale), glm::vec2(1, 0)),
+                vertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(1, 1)),
+                vertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(0, 1))
+            },
+            {
+                //! top
+                vertv3v2(glm::vec3( scale,  scale, -scale), glm::vec2(0, 1)),
+                vertv3v2(glm::vec3( scale,  scale,  scale), glm::vec2(0, 0)),
+                vertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(1, 0)),
+                vertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(1, 1))
+            },
+            {
+                //! bottom
+                vertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(0, 1)),
+                vertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(0, 0)),
+                vertv3v2(glm::vec3(-scale, -scale, -scale), glm::vec2(1, 0)),
+                vertv3v2(glm::vec3(-scale, -scale,  scale), glm::vec2(1, 1))
+            }
+        };
+
+        m_psSystem->getTextureManager()->load("./build/assets/textures/nz.jpg", 0);
+        m_psSystem->getTextureManager()->load("./build/assets/textures/nx.jpg", 1);
+        m_psSystem->getTextureManager()->load("./build/assets/textures/pz.jpg", 2);
+        m_psSystem->getTextureManager()->load("./build/assets/textures/px.jpg", 3);
+        m_psSystem->getTextureManager()->load("./build/assets/textures/py.jpg", 4);
+        m_psSystem->getTextureManager()->load("./build/assets/textures/ny.jpg", 5);
+
+        std::vector<SMesh> holder;
+        for (int i = 0;  i < 6; i++)
+        {
+            SMesh mesh;
+
+            GLsizei const vertexCount = 4;
+            GLsizeiptr const vertexSize = vertexCount * sizeof(vertv3v2);
+                    
+            GLsizei const elementCount = 4;
+            GLsizeiptr const elementSize = elementCount * sizeof(glm::uint32);
+            glm::uint32 elementData[] = { 0, 1, 2, 3 };
+
+            mesh.count = elementCount;
+
+            glGenVertexArrays(1, &mesh.vao);
+
+            glGenBuffers(SMesh::MAX, &mesh.buffers[0]);
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+            glBufferData(GL_ARRAY_BUFFER, vertexSize, &vertexData[i][0], GL_STATIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, elementData, GL_STATIC_DRAW);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+            glBindVertexArray(mesh.vao);
+                glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+                glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(vertv3v2), BUFFER_OFFSET(0));
+                glVertexAttribPointer(helpers::semantic::attr::TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(vertv3v2), BUFFER_OFFSET(sizeof(glm::vec3)));
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+                glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
+                glEnableVertexAttribArray(helpers::semantic::attr::TEXCOORD);
+            glBindVertexArray(0);
+
+            mesh.textured = true;
+            mesh.tex = i;
+            mesh.type = GL_TRIANGLE_FAN;
+            holder.push_back(mesh);
+        }
+
+        meshNode.name = "skybox";
+        meshNode.mesh = holder;
+        meshNode.visible = true;
+        m_vMesh.push_back(meshNode);
+    }
+
+    //! populate cube object
+    {
+        SMeshNode meshNode;
+        SMesh mesh;
+        std::vector<SMesh> holder;
+
+
+        float scale = 1.0 * 0.5;
+        GLsizei const vertexCount = 12;
+        GLsizeiptr const vertexSize = vertexCount * sizeof(vertv3v2);
+        vertv3v2 vertexData[12] = 
+        {
+            vertv3v2(glm::vec3(-scale, -scale, -scale), glm::vec2(0, 1)), 
+            vertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(1, 1)),
+            vertv3v2(glm::vec3( scale,  scale, -scale), glm::vec2(1, 0)),
+            vertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(0, 0)),
+            vertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(0, 1)),
+            vertv3v2(glm::vec3( scale,  scale,  scale), glm::vec2(0, 0)),
+            vertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(1, 0)),
+            vertv3v2(glm::vec3(-scale, -scale,  scale), glm::vec2(1, 1)),
+            vertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(0, 1)),
+            vertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(1, 1)),
+            vertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(1, 0)),
+            vertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(0, 0))
+        };
+
+        GLsizei const elementCount = 36;
+        GLsizeiptr const elementSize = elementCount * sizeof(glm::uint32);
+        mesh.count = elementCount;
+
+        glm::uint32 elementData[36] =
+        {
+            0, 2, 1,
+            0, 3, 2,
+            1, 5, 4,
+            1, 2, 5,
+            4, 6, 7,
+            4, 5, 6,
+            7, 3, 0,
+            7, 6, 3,
+            9, 5, 2,
+            9, 8, 5,
+            0, 11, 10,
+            0, 10, 7
+        };
+
+        glGenVertexArrays(1, &mesh.vao);
+
+        glGenBuffers(SMesh::MAX, &mesh.buffers[0]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+        glBufferData(GL_ARRAY_BUFFER, vertexSize, vertexData, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, elementData, GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        glBindVertexArray(mesh.vao);
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+            glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(vertv3v2), BUFFER_OFFSET(0));
+            glVertexAttribPointer(helpers::semantic::attr::TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(vertv3v2), BUFFER_OFFSET(sizeof(glm::vec3)));
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+            glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
+            glEnableVertexAttribArray(helpers::semantic::attr::TEXCOORD);
+        glBindVertexArray(0);
+
+        mesh.type = GL_TRIANGLES;
+        holder.push_back(mesh);
+
+        meshNode.name = "cube";
+        meshNode.mesh = holder;
+        meshNode.visible = false;
+        m_vMesh.push_back(meshNode);
+    }
 
     glViewport(0, 0, m_sCreationParams.width, m_sCreationParams.height);
-
     m_sMvp.constant.perspective = glm::perspective(45.0,
             double(m_sCreationParams.width / m_sCreationParams.height),
             0.1, 750.0);
@@ -146,8 +334,8 @@ void CSecondLife::init()
             glm::vec3(0.0, 0.0, -5.0),
             glm::vec3(0.0, 1.0, 0.0));
 
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    //glEnable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -158,6 +346,8 @@ void CSecondLife::init()
     glUseProgram(m_sShader.program);
     glUniformMatrix4fv(m_sShader.uniforms["modelview"], 1, GL_FALSE, &m_sMvp.getModelView()[0][0]);
     glUniformMatrix4fv(m_sShader.uniforms["projection"], 1, GL_FALSE, &m_sMvp.projection[0][0]);
+
+    glUniform4fv(m_sShader.uniforms["diffuse"], 1, &glm::vec4(1.0, 0.5, 0.0, 1.0)[0]);
     glUseProgram(0);
 }
 
@@ -238,18 +428,35 @@ void CSecondLife::update()
     glUseProgram(m_sShader.program);
     push();
         //! recursive rendering
+        glUniformMatrix4fv(m_sShader.uniforms["modelview"], 1, GL_FALSE, &m_sCurrentMatrix[0][0]);
         std::vector<SMeshNode>::iterator it = m_vMesh.begin();
         for (; it != m_vMesh.end(); it++)
         {
             if (it->visible)
             {
-                std::vector<SMesh>::iterator n = it->mesh.begin();
-                for (; n != it->mesh.end(); n++)
-                {
-                    glBindVertexArray(n->vao);
-                        glDrawElements(n->type, n->count, GL_UNSIGNED_INT, 0);
-                    glBindVertexArray(0);
-                }
+#ifdef DEBUG
+                fprintf(stdout, "[INF] Drawing %s.\n", it->name.c_str());
+#endif
+
+                push();
+                    glUniformMatrix4fv(m_sShader.uniforms["modelview"], 1, GL_FALSE, &m_sCurrentMatrix[0][0]);
+                    std::vector<SMesh>::iterator n = it->mesh.begin();
+                    for (; n != it->mesh.end(); n++)
+                    {
+                        if (n->textured)
+                            m_psSystem->getTextureManager()->bindTexture(n->tex);
+
+                        if (n->textured)
+                            glUniform1i(m_sShader.uniforms["textured"], GL_TRUE);
+
+                        glBindVertexArray(n->vao);
+                            glDrawElements(n->type, n->count, GL_UNSIGNED_INT, 0);
+                        glBindVertexArray(0);
+
+                        if (n->textured)
+                            glUniform1i(m_sShader.uniforms["textured"], GL_FALSE);
+                    }
+                pop();
             }
         }
     pop();
@@ -267,7 +474,7 @@ void CSecondLife::pop()
     m_vStack.pop();
 }
 
-void CSecondLife::loadWaveObjFile(char const *file, char const *path, bool visible)
+void CSecondLife::loadWaveObjFile(char const *file, char const *path, bool visible, float offset)
 {
     std::vector<tinyobj::shape_t> shapes;
     std::string err = tinyobj::LoadObj(shapes, file, path);
@@ -293,9 +500,9 @@ void CSecondLife::loadWaveObjFile(char const *file, char const *path, bool visib
         for (int v = 0; v < shapes[i].mesh.positions.size() / 3; v++)
         {
             vertexData.push_back(glm::vec3(
-                shapes[i].mesh.positions[3 * v + 0],
-                shapes[i].mesh.positions[3 * v + 1],
-                shapes[i].mesh.positions[3 * v + 2]));
+                shapes[i].mesh.positions[3 * v + 0] - offset,
+                shapes[i].mesh.positions[3 * v + 1] - offset,
+                shapes[i].mesh.positions[3 * v + 2] - offset));
         }
 
         vertexCount = vertexData.size();
