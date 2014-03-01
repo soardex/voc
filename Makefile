@@ -22,7 +22,8 @@ DEPDIR=$(OUTDIR)/objects/deps
 DF=$(DEPDIR)/$(*F)
 
 NCRDIR=ncres
-INCDIR=-isystem /usr/include/bullet/
+INCDIR=-isystem /usr/include/bullet/ \
+	   -I/usr/include/freetype2/
 LIBDIR=-L/usr/lib64/
 
 SRCDIR=voc
@@ -37,11 +38,13 @@ SRCS=\
 	$(SRCDIR)/system/EventHandler.cpp \
 	$(SRCDIR)/system/ScriptManager.cpp \
 	$(SRCDIR)/system/TextureManager.cpp \
+	$(SRCDIR)/system/FontManager.cpp \
 	$(SRCDIR)/system/PhysicsManager.cpp
 
 OBJS=$(addprefix $(OBJDIR)/, $(SRCS:.cpp=.o))
 LIBS=-lm -lSDL2 -lGLEW -lGL -lGLU -lfreeimage -llua -lassimp \
-	 -lLinearMath -lBulletDynamics -lBulletCollision -lBulletSoftBody
+	 -lLinearMath -lBulletDynamics -lBulletCollision -lBulletSoftBody \
+	 -lfreetype -lpugixml
 
 CFLAGS=-std=c++0x -g -Wall -Wextra -pedantic -fopenmp $(INCDIR)
 LFLAGS=$(LIBDIR) $(LIBS)

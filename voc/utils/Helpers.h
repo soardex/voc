@@ -111,6 +111,28 @@ namespace helpers
         }
     }
 
+    struct SVertv2v2
+    {
+        glm::vec2 position;
+        glm::vec2 texcoord;
+
+        SVertv2v2(glm::vec2 const &p, glm::vec2 const &t)
+            : position(p), texcoord(t)
+        {
+        }
+    };
+
+    struct SVertv3v2
+    {
+        glm::vec3 position;
+        glm::vec2 texcoord;
+
+        SVertv3v2(glm::vec3 const &p, glm::vec2 const &t)
+            : position(p), texcoord(t)
+        {
+        }
+    };
+
     std::string loadFile(std::string const &file);
     GLuint createShader(GLenum type, std::string const &source);
     bool checkShader(GLuint shader, std::string const &file);

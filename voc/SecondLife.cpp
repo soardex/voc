@@ -16,7 +16,6 @@
  */
 
 #include "SecondLife.h"
-
 #include "imported/tinyobjloader/tiny_obj_loader.h"
 
 CSecondLife::CSecondLife(CEmperorSystem *ces)
@@ -36,297 +35,71 @@ void CSecondLife::init()
     m_sTimer.current = m_sTimer.getUpdatedTime(); 
     m_sTimer.previous = 0.0;
 
-    bool validated = true;
-    if (validated)
+    struct SShaderDrop
     {
-        std::string vertShaderSource = "./build/assets/shaders/image-2d.vs";
-        std::string fragShaderSource = "./build/assets/shaders/image-2d.fs";
-
-        GLuint vertShader = helpers::createShader(GL_VERTEX_SHADER, vertShaderSource);
-        GLuint fragShader = helpers::createShader(GL_FRAGMENT_SHADER, fragShaderSource);
-
-        validated = validated && helpers::checkShader(vertShader, vertShaderSource);
-        validated = validated && helpers::checkShader(fragShader, fragShaderSource);
-
-        m_sShader.program = glCreateProgram();
-        glAttachShader(m_sShader.program, vertShader);
-        glAttachShader(m_sShader.program, fragShader);
-
-        glDeleteShader(vertShader);
-        glDeleteShader(fragShader);
-
-        glBindAttribLocation(m_sShader.program, helpers::semantic::attr::POSITION, "position");
-        glBindAttribLocation(m_sShader.program, helpers::semantic::attr::TEXCOORD, "texcoord");
-
-        glLinkProgram(m_sShader.program);
-        validated = helpers::checkProgram(m_sShader.program);
-    }
-
-    if (validated)
-        m_sShader.uniforms = helpers::getActiveUniforms(m_sShader.program);
-
-    //! populate grid object
-    {
-        SMeshNode meshNode;
-        SMesh mesh;
-        std::vector<SMesh> holder;
-
-        GLsizei elementCount;
-        GLsizeiptr elementSize;
-        std::vector<glm::uint32> elementData;
-
-        GLsizei vertexCount;
-        GLsizeiptr vertexSize;
-        std::vector<glm::vec3> vertexData;
-
-        float extent = 30.0, step = 1.0, h = -0.6;
-        for (int line = -extent; line <= extent; line += step)
-        {
-            vertexData.push_back(glm::vec3(line, h, extent));
-            vertexData.push_back(glm::vec3(line, h, -extent));
-
-            vertexData.push_back(glm::vec3(extent, h, line));
-            vertexData.push_back(glm::vec3(-extent, h, line));
-        }
-
-        vertexCount = vertexData.size();
-        vertexSize = vertexCount * sizeof(glm::vec3);
-
-        elementCount = vertexCount;
-        elementSize = elementCount * sizeof(glm::uint32);
-        for (int i = 0; i < elementCount; i++)
-            elementData.push_back(i);
-
-        mesh.count = elementCount;
-
-        glGenVertexArrays(1, &mesh.vao);
-
-        glGenBuffers(SMesh::MAX, &mesh.buffers[0]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
-        glBufferData(GL_ARRAY_BUFFER, vertexSize, &vertexData[0], GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, &elementData[0], GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-        glBindVertexArray(mesh.vao);
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
-            glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, 0, 0);
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
-            glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
-        glBindVertexArray(0);
-
-        mesh.type = GL_LINES;
-        holder.push_back(mesh);
-
-        meshNode.name = "grid";
-        meshNode.mesh = holder;
-        meshNode.visible = true;
-        m_vMesh.push_back(meshNode);
-    }
-
-    struct vertv3v2
-    {
-        glm::vec3 position;
-        glm::vec2 texcoord;
-
-        vertv3v2(glm::vec3 const &p, glm::vec2 const &t)
-            : position(p), texcoord(t)
-        {
-        }
+        std::string name;
+        std::string vert;
+        std::string frag;
     };
 
-    //! populate skybox object
+    SShaderDrop drops[] =
     {
-        float scale = 250.0;
-        SMeshNode meshNode;
-        vertv3v2 vertexData[6][4] =
+        { "perspective", "./build/assets/shaders/image-2d.vs", "./build/assets/shaders/image-2d.fs" },
+        { "font", "./build/assets/shaders/font.vs", "./build/assets/shaders/font.fs" }
+    };
+
+    for (size_t i = 0; i < sizeof(drops) / sizeof(drops[0]); i++)
+    {
+        bool validated = true;
+        if (validated)
         {
-            {
-                //! front
-                vertv3v2(glm::vec3(-scale, -scale, -scale), glm::vec2(0, 0)),
-                vertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(1, 0)),
-                vertv3v2(glm::vec3( scale,  scale, -scale), glm::vec2(1, 1)),
-                vertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(0, 1))
-            },
-            {
-                //! left
-                vertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(0, 0)),
-                vertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(1, 0)),
-                vertv3v2(glm::vec3( scale,  scale,  scale), glm::vec2(1, 1)),
-                vertv3v2(glm::vec3( scale,  scale, -scale), glm::vec2(0, 1))
-            },
-            {
-                //! back
-                vertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(0, 0)),
-                vertv3v2(glm::vec3(-scale, -scale,  scale), glm::vec2(1, 0)),
-                vertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(1, 1)),
-                vertv3v2(glm::vec3( scale,  scale,  scale), glm::vec2(0, 1))
-            },
-            {
-                //! right
-                vertv3v2(glm::vec3(-scale, -scale,  scale), glm::vec2(0, 0)),
-                vertv3v2(glm::vec3(-scale, -scale, -scale), glm::vec2(1, 0)),
-                vertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(1, 1)),
-                vertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(0, 1))
-            },
-            {
-                //! top
-                vertv3v2(glm::vec3( scale,  scale, -scale), glm::vec2(0, 1)),
-                vertv3v2(glm::vec3( scale,  scale,  scale), glm::vec2(0, 0)),
-                vertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(1, 0)),
-                vertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(1, 1))
-            },
-            {
-                //! bottom
-                vertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(0, 1)),
-                vertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(0, 0)),
-                vertv3v2(glm::vec3(-scale, -scale, -scale), glm::vec2(1, 0)),
-                vertv3v2(glm::vec3(-scale, -scale,  scale), glm::vec2(1, 1))
-            }
-        };
+            m_mShader[drops[i].name.c_str()] = SShader(drops[i].name.c_str());
 
-        m_psSystem->getTextureManager()->load("./build/assets/textures/nz.jpg", 0);
-        m_psSystem->getTextureManager()->load("./build/assets/textures/nx.jpg", 1);
-        m_psSystem->getTextureManager()->load("./build/assets/textures/pz.jpg", 2);
-        m_psSystem->getTextureManager()->load("./build/assets/textures/px.jpg", 3);
-        m_psSystem->getTextureManager()->load("./build/assets/textures/py.jpg", 4);
-        m_psSystem->getTextureManager()->load("./build/assets/textures/ny.jpg", 5);
+            std::string vertShaderSource = drops[i].vert;
+            std::string fragShaderSource = drops[i].frag;
 
-        std::vector<SMesh> holder;
-        for (int i = 0;  i < 6; i++)
-        {
-            SMesh mesh;
+            GLuint vertShader = helpers::createShader(GL_VERTEX_SHADER, vertShaderSource);
+            GLuint fragShader = helpers::createShader(GL_FRAGMENT_SHADER, fragShaderSource);
 
-            GLsizei const vertexCount = 4;
-            GLsizeiptr const vertexSize = vertexCount * sizeof(vertv3v2);
-                    
-            GLsizei const elementCount = 4;
-            GLsizeiptr const elementSize = elementCount * sizeof(glm::uint32);
-            glm::uint32 elementData[] = { 0, 1, 2, 3 };
+            validated = validated && helpers::checkShader(vertShader, vertShaderSource);
+            validated = validated && helpers::checkShader(fragShader, fragShaderSource);
 
-            mesh.count = elementCount;
+            m_mShader[drops[i].name.c_str()].program = glCreateProgram();
+            glAttachShader(m_mShader[drops[i].name.c_str()].program, vertShader);
+            glAttachShader(m_mShader[drops[i].name.c_str()].program, fragShader);
 
-            glGenVertexArrays(1, &mesh.vao);
+            glDeleteShader(vertShader);
+            glDeleteShader(fragShader);
 
-            glGenBuffers(SMesh::MAX, &mesh.buffers[0]);
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
-            glBufferData(GL_ARRAY_BUFFER, vertexSize, &vertexData[i][0], GL_STATIC_DRAW);
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindAttribLocation(m_mShader[drops[i].name.c_str()].program, helpers::semantic::attr::POSITION, "position");
+            glBindAttribLocation(m_mShader[drops[i].name.c_str()].program, helpers::semantic::attr::TEXCOORD, "texcoord");
 
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, elementData, GL_STATIC_DRAW);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            glLinkProgram(m_mShader[drops[i].name.c_str()].program);
+            validated = helpers::checkProgram(m_mShader[drops[i].name.c_str()].program);
 
-            glBindVertexArray(mesh.vao);
-                glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
-                glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(vertv3v2), BUFFER_OFFSET(0));
-                glVertexAttribPointer(helpers::semantic::attr::TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(vertv3v2), BUFFER_OFFSET(sizeof(glm::vec3)));
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
-                glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
-                glEnableVertexAttribArray(helpers::semantic::attr::TEXCOORD);
-            glBindVertexArray(0);
-
-            mesh.textured = true;
-            mesh.tex = i;
-            mesh.type = GL_TRIANGLE_FAN;
-            holder.push_back(mesh);
         }
 
-        meshNode.name = "skybox";
-        meshNode.mesh = holder;
-        meshNode.visible = true;
-        m_vMesh.push_back(meshNode);
+        if (validated)
+            m_mShader[drops[i].name.c_str()].uniforms = helpers::getActiveUniforms(m_mShader[drops[i].name.c_str()].program);
     }
 
-    //! populate cube object
-    {
-        SMeshNode meshNode;
-        SMesh mesh;
-        std::vector<SMesh> holder;
+    m_psSystem->getTextureManager()->load("./build/assets/textures/nz.jpg", 0, GL_BGR);
+    m_psSystem->getTextureManager()->load("./build/assets/textures/nx.jpg", 1, GL_BGR);
+    m_psSystem->getTextureManager()->load("./build/assets/textures/pz.jpg", 2, GL_BGR);
+    m_psSystem->getTextureManager()->load("./build/assets/textures/px.jpg", 3, GL_BGR);
+    m_psSystem->getTextureManager()->load("./build/assets/textures/py.jpg", 4, GL_BGR);
+    m_psSystem->getTextureManager()->load("./build/assets/textures/ny.jpg", 5, GL_BGR);
 
+    m_psSystem->getFontManager()->load("serif", "/usr/share/fonts/dejavu/DejaVuSerif.ttf");
 
-        float scale = 1.0 * 0.5;
-        GLsizei const vertexCount = 12;
-        GLsizeiptr const vertexSize = vertexCount * sizeof(vertv3v2);
-        vertv3v2 vertexData[12] = 
-        {
-            vertv3v2(glm::vec3(-scale, -scale, -scale), glm::vec2(0, 1)), 
-            vertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(1, 1)),
-            vertv3v2(glm::vec3( scale,  scale, -scale), glm::vec2(1, 0)),
-            vertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(0, 0)),
-            vertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(0, 1)),
-            vertv3v2(glm::vec3( scale,  scale,  scale), glm::vec2(0, 0)),
-            vertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(1, 0)),
-            vertv3v2(glm::vec3(-scale, -scale,  scale), glm::vec2(1, 1)),
-            vertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(0, 1)),
-            vertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(1, 1)),
-            vertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(1, 0)),
-            vertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(0, 0))
-        };
-
-        GLsizei const elementCount = 36;
-        GLsizeiptr const elementSize = elementCount * sizeof(glm::uint32);
-        mesh.count = elementCount;
-
-        glm::uint32 elementData[36] =
-        {
-            0, 2, 1,
-            0, 3, 2,
-            1, 5, 4,
-            1, 2, 5,
-            4, 6, 7,
-            4, 5, 6,
-            7, 3, 0,
-            7, 6, 3,
-            9, 5, 2,
-            9, 8, 5,
-            0, 11, 10,
-            0, 10, 7
-        };
-
-        glGenVertexArrays(1, &mesh.vao);
-
-        glGenBuffers(SMesh::MAX, &mesh.buffers[0]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
-        glBufferData(GL_ARRAY_BUFFER, vertexSize, vertexData, GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, elementData, GL_STATIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
-        glBindVertexArray(mesh.vao);
-            glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
-            glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(vertv3v2), BUFFER_OFFSET(0));
-            glVertexAttribPointer(helpers::semantic::attr::TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(vertv3v2), BUFFER_OFFSET(sizeof(glm::vec3)));
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
-            glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
-            glEnableVertexAttribArray(helpers::semantic::attr::TEXCOORD);
-        glBindVertexArray(0);
-
-        mesh.type = GL_TRIANGLES;
-        holder.push_back(mesh);
-
-        meshNode.name = "cube";
-        meshNode.mesh = holder;
-        meshNode.visible = false;
-        m_vMesh.push_back(meshNode);
-    }
+    stagePerspectiveObjects();
 
     glViewport(0, 0, m_sCreationParams.width, m_sCreationParams.height);
     m_sMvp.constant.perspective = glm::perspective(45.0,
             double(m_sCreationParams.width / m_sCreationParams.height),
-            0.1, 750.0);
-    m_sMvp.constant.orthographic = glm::ortho(0, m_sCreationParams.width,
-            m_sCreationParams.height, 0);
+            0.001, 750.0);
+    m_sMvp.constant.orthographic = glm::ortho(0.0, double(m_sCreationParams.width),
+            double(m_sCreationParams.height), 0.0, -1.0, 1.0);
 
     m_sMvp.setProjection(SModelViewProjection::PERSPECTIVE);
     m_sMvp.model = glm::mat4(1.0);
@@ -334,20 +107,14 @@ void CSecondLife::init()
             glm::vec3(0.0, 0.0, -5.0),
             glm::vec3(0.0, 1.0, 0.0));
 
-    //glEnable(GL_CULL_FACE);
-    //glCullFace(GL_BACK);
-
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
 
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
     glFrontFace(GL_CCW);
 
-    glUseProgram(m_sShader.program);
-    glUniformMatrix4fv(m_sShader.uniforms["modelview"], 1, GL_FALSE, &m_sMvp.getModelView()[0][0]);
-    glUniformMatrix4fv(m_sShader.uniforms["projection"], 1, GL_FALSE, &m_sMvp.projection[0][0]);
-
-    glUniform4fv(m_sShader.uniforms["diffuse"], 1, &glm::vec4(1.0, 0.5, 0.0, 1.0)[0]);
+    glUseProgram(m_mShader["perspective"].program);
+    glUniform4fv(m_mShader["perspective"].uniforms["diffuse"], 1, &glm::vec4(1.0, 0.5, 0.0, 1.0)[0]);
     glUseProgram(0);
 }
 
@@ -360,14 +127,15 @@ void CSecondLife::destroy()
         for (; n != it->mesh.end(); n++)
         {
             glDeleteBuffers(SMesh::MAX, &n->buffers[0]);
-            glDeleteVertexArrays(1, &n->vao);
+            glDeleteVertexArrays(1, &n->object);
         }
 
         it->mesh.clear();
     }
 
     m_vMesh.clear();
-    glDeleteProgram(m_sShader.program);
+    glDeleteProgram(m_mShader["perspective"].program);
+    glDeleteProgram(m_mShader["font"].program);
 }
 
 void CSecondLife::update()
@@ -414,51 +182,57 @@ void CSecondLife::update()
         m_sCamera.eye.y = sin(m_sCamera.look);
     }
 
-    glUseProgram(m_sShader.program);
-    glUniformMatrix4fv(m_sShader.uniforms["modelview"], 1, GL_FALSE, &m_sMvp.getModelView(view)[0][0]);
-    glUniformMatrix4fv(m_sShader.uniforms["projection"], 1, GL_FALSE, &m_sMvp.projection[0][0]);
-    glUseProgram(0);
-
     m_sCurrentMatrix = m_sMvp.getModelView(view);
 
     glClearColor(0.0, 0.7, 0.7, 1.0);
     glClearDepth(1.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glUseProgram(m_sShader.program);
+    glUseProgram(m_mShader["perspective"].program);
+    m_sMvp.setProjection(SModelViewProjection::PERSPECTIVE);
+    glUniformMatrix4fv(m_mShader["perspective"].uniforms["projection"], 1, GL_FALSE, &m_sMvp.projection[0][0]);
+    glUniformMatrix4fv(m_mShader["perspective"].uniforms["modelview"], 1, GL_FALSE, &m_sMvp.getModelView(view)[0][0]);
     push();
         //! recursive rendering
-        glUniformMatrix4fv(m_sShader.uniforms["modelview"], 1, GL_FALSE, &m_sCurrentMatrix[0][0]);
+        glUniformMatrix4fv(m_mShader["perspective"].uniforms["modelview"], 1, GL_FALSE, &m_sCurrentMatrix[0][0]);
         std::vector<SMeshNode>::iterator it = m_vMesh.begin();
         for (; it != m_vMesh.end(); it++)
         {
             if (it->visible)
             {
-#ifdef DEBUG
-                fprintf(stdout, "[INF] Drawing %s.\n", it->name.c_str());
-#endif
-
                 push();
-                    glUniformMatrix4fv(m_sShader.uniforms["modelview"], 1, GL_FALSE, &m_sCurrentMatrix[0][0]);
+                    glUniformMatrix4fv(m_mShader["perspective"].uniforms["modelview"], 1, GL_FALSE, &m_sCurrentMatrix[0][0]);
                     std::vector<SMesh>::iterator n = it->mesh.begin();
                     for (; n != it->mesh.end(); n++)
                     {
-                        if (n->textured)
-                            m_psSystem->getTextureManager()->bindTexture(n->tex);
+                        if (n->options.texture)
+                        {
+                            m_psSystem->getTextureManager()->bindTexture(n->properties.texture);
+                            glUniform1i(m_mShader["perspective"].uniforms["textured"], GL_TRUE);
+                        }
 
-                        if (n->textured)
-                            glUniform1i(m_sShader.uniforms["textured"], GL_TRUE);
-
-                        glBindVertexArray(n->vao);
-                            glDrawElements(n->type, n->count, GL_UNSIGNED_INT, 0);
+                        glBindVertexArray(n->object);
+                            glDrawElements(n->properties.type, n->properties.count, GL_UNSIGNED_INT, 0);
                         glBindVertexArray(0);
 
-                        if (n->textured)
-                            glUniform1i(m_sShader.uniforms["textured"], GL_FALSE);
+                        if (n->options.texture)
+                            glUniform1i(m_mShader["perspective"].uniforms["textured"], GL_FALSE);
                     }
                 pop();
             }
         }
+    pop();
+    glUseProgram(0);
+
+    glUseProgram(m_mShader["font"].program);
+    m_sMvp.setProjection(SModelViewProjection::ORTHOGRAPHIC);
+    glUniformMatrix4fv(m_mShader["font"].uniforms["projection"], 1, GL_FALSE, &m_sMvp.projection[0][0]);
+    push();
+        m_psSystem->getFontManager()->setFontType("serif");
+        m_psSystem->getFontManager()->setPixelSize(48);
+        glUniform1f(m_mShader["font"].uniforms["offset"],
+                m_psSystem->getFontManager()->getPixelSize());
+        m_psSystem->getFontManager()->write("Hello, World!", glm::vec2(0.0, 0.0));
     pop();
     glUseProgram(0);
 }
@@ -513,9 +287,9 @@ void CSecondLife::loadWaveObjFile(char const *file, char const *path, bool visib
 
         elementCount = elementData.size();
         elementSize = elementCount * sizeof(glm::uint32);
-        mesh.count = elementCount;
+        mesh.properties.count = elementCount;
 
-        glGenVertexArrays(1, &mesh.vao);
+        glGenVertexArrays(1, &mesh.object);
 
         glGenBuffers(SMesh::MAX, &mesh.buffers[0]);
         glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
@@ -526,7 +300,7 @@ void CSecondLife::loadWaveObjFile(char const *file, char const *path, bool visib
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, &elementData[0], GL_STATIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        glBindVertexArray(mesh.vao);
+        glBindVertexArray(mesh.object);
             glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
             glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, 0, 0);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -535,7 +309,7 @@ void CSecondLife::loadWaveObjFile(char const *file, char const *path, bool visib
             glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
         glBindVertexArray(0);
 
-        mesh.type = GL_TRIANGLES;
+        mesh.properties.type = GL_TRIANGLES;
         holder.push_back(mesh);
     }
 
@@ -543,5 +317,245 @@ void CSecondLife::loadWaveObjFile(char const *file, char const *path, bool visib
     meshNode.mesh = holder;
     meshNode.visible = visible;
     m_vMesh.push_back(meshNode);
+}
+
+void CSecondLife::stagePerspectiveObjects()
+{
+    //! populate grid object
+    {
+        SMeshNode meshNode;
+        SMesh mesh;
+        std::vector<SMesh> holder;
+
+        GLsizei elementCount;
+        GLsizeiptr elementSize;
+        std::vector<glm::uint32> elementData;
+
+        GLsizei vertexCount;
+        GLsizeiptr vertexSize;
+        std::vector<glm::vec3> vertexData;
+
+        float extent = 30.0, step = 1.0, h = -0.6;
+        for (int line = -extent; line <= extent; line += step)
+        {
+            vertexData.push_back(glm::vec3(line, h, extent));
+            vertexData.push_back(glm::vec3(line, h, -extent));
+
+            vertexData.push_back(glm::vec3(extent, h, line));
+            vertexData.push_back(glm::vec3(-extent, h, line));
+        }
+
+        vertexCount = vertexData.size();
+        vertexSize = vertexCount * sizeof(glm::vec3);
+
+        elementCount = vertexCount;
+        elementSize = elementCount * sizeof(glm::uint32);
+        for (int i = 0; i < elementCount; i++)
+            elementData.push_back(i);
+
+        mesh.properties.count = elementCount;
+
+        glGenVertexArrays(1, &mesh.object);
+
+        glGenBuffers(SMesh::MAX, &mesh.buffers[0]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+        glBufferData(GL_ARRAY_BUFFER, vertexSize, &vertexData[0], GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, &elementData[0], GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        glBindVertexArray(mesh.object);
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+            glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, 0, 0);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+            glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
+        glBindVertexArray(0);
+
+        mesh.properties.type = GL_LINES;
+        holder.push_back(mesh);
+
+        meshNode.name = "grid";
+        meshNode.mesh = holder;
+        meshNode.visible = true;
+        m_vMesh.push_back(meshNode);
+    }
+
+    //! populate skybox object
+    {
+        float scale = 250.0;
+        SMeshNode meshNode;
+        helpers::SVertv3v2 vertexData[6][4] =
+        {
+            {
+                //! front
+                helpers::SVertv3v2(glm::vec3(-scale, -scale, -scale), glm::vec2(0, 0)),
+                helpers::SVertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(1, 0)),
+                helpers::SVertv3v2(glm::vec3( scale,  scale, -scale), glm::vec2(1, 1)),
+                helpers::SVertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(0, 1))
+            },
+            {
+                //! left
+                helpers::SVertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(0, 0)),
+                helpers::SVertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(1, 0)),
+                helpers::SVertv3v2(glm::vec3( scale,  scale,  scale), glm::vec2(1, 1)),
+                helpers::SVertv3v2(glm::vec3( scale,  scale, -scale), glm::vec2(0, 1))
+            },
+            {
+                //! back
+                helpers::SVertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(0, 0)),
+                helpers::SVertv3v2(glm::vec3(-scale, -scale,  scale), glm::vec2(1, 0)),
+                helpers::SVertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(1, 1)),
+                helpers::SVertv3v2(glm::vec3( scale,  scale,  scale), glm::vec2(0, 1))
+            },
+            {
+                //! right
+                helpers::SVertv3v2(glm::vec3(-scale, -scale,  scale), glm::vec2(0, 0)),
+                helpers::SVertv3v2(glm::vec3(-scale, -scale, -scale), glm::vec2(1, 0)),
+                helpers::SVertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(1, 1)),
+                helpers::SVertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(0, 1))
+            },
+            {
+                //! top
+                helpers::SVertv3v2(glm::vec3( scale,  scale, -scale), glm::vec2(0, 1)),
+                helpers::SVertv3v2(glm::vec3( scale,  scale,  scale), glm::vec2(0, 0)),
+                helpers::SVertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(1, 0)),
+                helpers::SVertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(1, 1))
+            },
+            {
+                //! bottom
+                helpers::SVertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(0, 1)),
+                helpers::SVertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(0, 0)),
+                helpers::SVertv3v2(glm::vec3(-scale, -scale, -scale), glm::vec2(1, 0)),
+                helpers::SVertv3v2(glm::vec3(-scale, -scale,  scale), glm::vec2(1, 1))
+            }
+        };
+
+        std::vector<SMesh> holder;
+        for (int i = 0;  i < 6; i++)
+        {
+            SMesh mesh;
+
+            GLsizei const vertexCount = 4;
+            GLsizeiptr const vertexSize = vertexCount * sizeof(helpers::SVertv3v2);
+                    
+            GLsizei const elementCount = 4;
+            GLsizeiptr const elementSize = elementCount * sizeof(glm::uint32);
+            glm::uint32 elementData[] = { 0, 1, 2, 3 };
+
+            mesh.properties.count = elementCount;
+
+            glGenVertexArrays(1, &mesh.object);
+
+            glGenBuffers(SMesh::MAX, &mesh.buffers[0]);
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+            glBufferData(GL_ARRAY_BUFFER, vertexSize, &vertexData[i][0], GL_STATIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, elementData, GL_STATIC_DRAW);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+            glBindVertexArray(mesh.object);
+                glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+                glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(helpers::SVertv3v2), BUFFER_OFFSET(0));
+                glVertexAttribPointer(helpers::semantic::attr::TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(helpers::SVertv3v2), BUFFER_OFFSET(sizeof(glm::vec3)));
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+                glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
+                glEnableVertexAttribArray(helpers::semantic::attr::TEXCOORD);
+            glBindVertexArray(0);
+
+            mesh.options.texture = true;
+            mesh.properties.texture = i;
+            mesh.properties.type = GL_TRIANGLE_FAN;
+            holder.push_back(mesh);
+        }
+
+        meshNode.name = "skybox";
+        meshNode.mesh = holder;
+        meshNode.visible = true;
+        m_vMesh.push_back(meshNode);
+    }
+
+    //! populate cube object
+    {
+        SMeshNode meshNode;
+        SMesh mesh;
+        std::vector<SMesh> holder;
+
+        float scale = 1.0 * 0.5;
+        GLsizei const vertexCount = 12;
+        GLsizeiptr const vertexSize = vertexCount * sizeof(helpers::SVertv3v2);
+        helpers::SVertv3v2 vertexData[12] = 
+        {
+            helpers::SVertv3v2(glm::vec3(-scale, -scale, -scale), glm::vec2(0, 1)), 
+            helpers::SVertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(1, 1)),
+            helpers::SVertv3v2(glm::vec3( scale,  scale, -scale), glm::vec2(1, 0)),
+            helpers::SVertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(0, 0)),
+            helpers::SVertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(0, 1)),
+            helpers::SVertv3v2(glm::vec3( scale,  scale,  scale), glm::vec2(0, 0)),
+            helpers::SVertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(1, 0)),
+            helpers::SVertv3v2(glm::vec3(-scale, -scale,  scale), glm::vec2(1, 1)),
+            helpers::SVertv3v2(glm::vec3(-scale,  scale,  scale), glm::vec2(0, 1)),
+            helpers::SVertv3v2(glm::vec3(-scale,  scale, -scale), glm::vec2(1, 1)),
+            helpers::SVertv3v2(glm::vec3( scale, -scale,  scale), glm::vec2(1, 0)),
+            helpers::SVertv3v2(glm::vec3( scale, -scale, -scale), glm::vec2(0, 0))
+        };
+
+        GLsizei const elementCount = 36;
+        GLsizeiptr const elementSize = elementCount * sizeof(glm::uint32);
+        mesh.properties.count = elementCount;
+
+        glm::uint32 elementData[36] =
+        {
+            0, 2, 1,
+            0, 3, 2,
+            1, 5, 4,
+            1, 2, 5,
+            4, 6, 7,
+            4, 5, 6,
+            7, 3, 0,
+            7, 6, 3,
+            9, 5, 2,
+            9, 8, 5,
+            0, 11, 10,
+            0, 10, 7
+        };
+
+        glGenVertexArrays(1, &mesh.object);
+
+        glGenBuffers(SMesh::MAX, &mesh.buffers[0]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+        glBufferData(GL_ARRAY_BUFFER, vertexSize, vertexData, GL_STATIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, elementSize, elementData, GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        glBindVertexArray(mesh.object);
+            glBindBuffer(GL_ARRAY_BUFFER, mesh.buffers[SMesh::VERTEX]);
+            glVertexAttribPointer(helpers::semantic::attr::POSITION, 3, GL_FLOAT, GL_FALSE, sizeof(helpers::SVertv3v2), BUFFER_OFFSET(0));
+            glVertexAttribPointer(helpers::semantic::attr::TEXCOORD, 2, GL_FLOAT, GL_FALSE, sizeof(helpers::SVertv3v2), BUFFER_OFFSET(sizeof(glm::vec3)));
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.buffers[SMesh::ELEMENT]);
+            glEnableVertexAttribArray(helpers::semantic::attr::POSITION);
+            glEnableVertexAttribArray(helpers::semantic::attr::TEXCOORD);
+        glBindVertexArray(0);
+
+        mesh.properties.type = GL_TRIANGLES;
+        holder.push_back(mesh);
+
+        meshNode.name = "cube";
+        meshNode.mesh = holder;
+        meshNode.visible = true;
+        m_vMesh.push_back(meshNode);
+    }
 }
 

@@ -39,6 +39,8 @@ protected:
     void push();
     void pop();
 
+    void stagePerspectiveObjects();
+
 private:
     CEmperorSystem *m_psSystem;
 
@@ -114,11 +116,18 @@ private:
 
     struct SShader
     {
+        std::string name;
         GLuint program;
 
         std::map<std::string, GLint> attribs;
         std::map<std::string, GLint> uniforms;
-    } m_sShader;
+
+        SShader(char const *name = "unnamed")
+        {
+            this->name = name;
+            program = 0;
+        }
+    };
 
     struct SMesh
     {
@@ -130,14 +139,16 @@ private:
             MAX
         };
 
-        GLuint vao;
-        GLuint tex;
-        GLenum type;
-        GLint count;
-
-        bool textured;
-
+        GLuint object;
         std::vector<GLuint> buffers;
+
+        struct
+        {
+            GLuint texture;
+            GLenum type;
+            GLint count;
+        } properties;
+
 
         struct
         {
@@ -157,17 +168,23 @@ private:
 
         struct
         {
-            bool textured;
+            bool texture;
+            bool light;
+            bool blend;
+            bool cull;
         } options;
 
         SMesh() : buffers(MAX)
         {
-            vao = 0;
-            tex = 0;
-            type = 0;
-            count = 0;
+            object = 0;
+            properties.texture = 0;
+            properties.type = 0;
+            properties.count = 0;
 
-            textured = false;
+            options.texture = false;
+            options.light = false;
+            options.blend = false;
+            options.cull = false;
         }
     };
 
@@ -175,10 +192,19 @@ private:
     {
         std::string name;
         bool visible;
+        unsigned int priority;
 
         std::vector<SMesh> mesh;
+
+        SMeshNode()
+        {
+            name = "unnamed";
+            visible = false;
+            priority = 0;
+        }
     };
 
+    std::map<std::string, SShader> m_mShader;
     std::vector<SMeshNode> m_vMesh;
 
     std::stack<glm::mat4, std::vector<glm::mat4> > m_vStack;

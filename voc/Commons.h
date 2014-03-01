@@ -43,9 +43,13 @@
 
 #include <lua.hpp>
 #include <FreeImage.h>
+#include <pugixml.hpp>
 
 #include <btBulletDynamicsCommon.h>
 #include <btBulletCollisionCommon.h>
 #include <BulletCollision/CollisionDispatch/btGhostObject.h>
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
 
 #endif /* end of include guard: _COMMONS_H_ */
