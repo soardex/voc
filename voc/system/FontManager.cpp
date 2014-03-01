@@ -155,10 +155,12 @@ void CFontManager::write(char const *text, glm::vec2 pos)
     glDeleteTextures(1, &texture);
 }
 
-void CFontManager::setPixelSize(int size)
+void CFontManager::setPixelSize(GLint location, int size)
 {
     FT_Set_Pixel_Sizes(m_sFont.face, 0, size);
     m_sFont.size = size;
+
+    glUniform1f(location, float(m_sFont.size));
 }
 
 void CFontManager::setFontType(char const *name)

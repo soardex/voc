@@ -68,12 +68,14 @@ private:
             ORTHOGRAPHIC
         };
 
-        void setProjection(EProjection e)
+        void setProjection(GLint location, EProjection e)
         {
             if (e == PERSPECTIVE)
                 projection = constant.perspective;
             else
                 projection = constant.orthographic;
+
+            glUniformMatrix4fv(location, 1, GL_FALSE, &projection[0][0]);
         }
 
         glm::mat4 getModelView() const { return view * model; }

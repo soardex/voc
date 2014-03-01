@@ -101,7 +101,6 @@ void CSecondLife::init()
     m_sMvp.constant.orthographic = glm::ortho(0.0, double(m_sCreationParams.width),
             double(m_sCreationParams.height), 0.0, -1.0, 1.0);
 
-    m_sMvp.setProjection(SModelViewProjection::PERSPECTIVE);
     m_sMvp.model = glm::mat4(1.0);
     m_sMvp.view = glm::lookAt( glm::vec3(0.0, 0.0, 3.0),
             glm::vec3(0.0, 0.0, -5.0),
@@ -189,8 +188,7 @@ void CSecondLife::update()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glUseProgram(m_mShader["perspective"].program);
-    m_sMvp.setProjection(SModelViewProjection::PERSPECTIVE);
-    glUniformMatrix4fv(m_mShader["perspective"].uniforms["projection"], 1, GL_FALSE, &m_sMvp.projection[0][0]);
+    m_sMvp.setProjection(m_mShader["perspective"].uniforms["projection"], SModelViewProjection::PERSPECTIVE);
     glUniformMatrix4fv(m_mShader["perspective"].uniforms["modelview"], 1, GL_FALSE, &m_sMvp.getModelView(view)[0][0]);
     push();
         //! recursive rendering
@@ -225,14 +223,11 @@ void CSecondLife::update()
     glUseProgram(0);
 
     glUseProgram(m_mShader["font"].program);
-    m_sMvp.setProjection(SModelViewProjection::ORTHOGRAPHIC);
-    glUniformMatrix4fv(m_mShader["font"].uniforms["projection"], 1, GL_FALSE, &m_sMvp.projection[0][0]);
+    m_sMvp.setProjection(m_mShader["font"].uniforms["projection"], SModelViewProjection::ORTHOGRAPHIC);
     push();
         m_psSystem->getFontManager()->setFontType("serif");
-        m_psSystem->getFontManager()->setPixelSize(48);
-        glUniform1f(m_mShader["font"].uniforms["offset"],
-                m_psSystem->getFontManager()->getPixelSize());
-        m_psSystem->getFontManager()->write("Hello, World!", glm::vec2(0.0, 0.0));
+        m_psSystem->getFontManager()->setPixelSize(m_mShader["font"].uniforms["offset"], 48);
+        m_psSystem->getFontManager()->write("Hello, World!", glm::vec2(10.0));
     pop();
     glUseProgram(0);
 }

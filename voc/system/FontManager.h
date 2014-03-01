@@ -33,7 +33,7 @@ public:
     void load(char const *name, char const *file);
     void write(char const *text, glm::vec2 pos);
 
-    void setPixelSize(int size);
+    void setPixelSize(GLint location, int size);
     void setFontType(char const *name);
 
     int getPixelSize() const { return m_sFont.size; }
