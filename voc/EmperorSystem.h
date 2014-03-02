@@ -26,6 +26,7 @@
 #include "system/TextureManager.h"
 #include "system/PhysicsManager.h"
 #include "system/FontManager.h"
+#include "system/SpriteManager.h"
 
 class CEmperorSystem
 {
@@ -43,6 +44,7 @@ public:
     CTextureManager* getTextureManager() const { return m_psTextureManager; }
     CPhysicsManager* getPhysicsManager() const { return m_psPhysicsManager; }
     CFontManager* getFontManager() const { return m_psFontManager; }
+    CSpriteManager* getSpriteManager() const { return m_psSpriteManager; }
 
 protected:
     void initializeRenderer();
@@ -51,6 +53,7 @@ protected:
     void initializeTextureManager();
     void initializePhysicsManager();
     void initializeFontManager();
+    void initializeSpriteManager();
 
     unsigned int getRealTime() const;
 
@@ -61,6 +64,7 @@ private:
     CTextureManager *m_psTextureManager;
     CPhysicsManager *m_psPhysicsManager;
     CFontManager *m_psFontManager;
+    CSpriteManager *m_psSpriteManager;
 };
 
 #endif /* end of include guard: EMPERORSYSTEM_H */

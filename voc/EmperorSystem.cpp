@@ -23,7 +23,8 @@ CEmperorSystem::CEmperorSystem()
     m_psScriptManager(nullptr),
     m_psTextureManager(nullptr),
     m_psPhysicsManager(nullptr),
-    m_psFontManager(nullptr)
+    m_psFontManager(nullptr),
+    m_psSpriteManager(nullptr)
 {
 }
 
@@ -39,10 +40,19 @@ void CEmperorSystem::init()
     initializeTextureManager();
     initializePhysicsManager();
     initializeFontManager();
+    initializeSpriteManager();
 }
 
 void CEmperorSystem::destroy()
 {
+    if (m_psSpriteManager)
+    {
+        m_psSpriteManager->destroy();
+        
+        delete m_psSpriteManager;
+        m_psSpriteManager = nullptr;
+    }
+
     if (m_psFontManager)
     {
         m_psFontManager->destroy();
@@ -152,6 +162,15 @@ void CEmperorSystem::initializeFontManager()
         fprintf(stderr, "[ERR] System Error: Unable to initialize font manager.");
 
     m_psFontManager->init();
+}
+
+void CEmperorSystem::initializeSpriteManager()
+{
+    m_psSpriteManager = new CSpriteManager();
+    if (!m_psSpriteManager)
+        fprintf(stderr, "[ERR] System Error: Unable to initialize font manager.");
+
+    m_psSpriteManager->init();
 }
 
 unsigned int CEmperorSystem::getRealTime() const

@@ -1,0 +1,5 @@
+<texture name="texDream" path="./build/assets/textures/sprites/dream.png">
+    <sprite name="sprDreamBS">
+        <frame id="0" x1="0" y1="0" x2="0" y2="0" />
+    </sprite>
+</texture>

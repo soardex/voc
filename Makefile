@@ -39,7 +39,8 @@ SRCS=\
 	$(SRCDIR)/system/ScriptManager.cpp \
 	$(SRCDIR)/system/TextureManager.cpp \
 	$(SRCDIR)/system/FontManager.cpp \
-	$(SRCDIR)/system/PhysicsManager.cpp
+	$(SRCDIR)/system/PhysicsManager.cpp \
+	$(SRCDIR)/system/SpriteManager.cpp
 
 OBJS=$(addprefix $(OBJDIR)/, $(SRCS:.cpp=.o))
 LIBS=-lm -lSDL2 -lGLEW -lGL -lGLU -lfreeimage -llua -lassimp \
