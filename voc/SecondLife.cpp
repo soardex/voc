@@ -44,7 +44,7 @@ void CSecondLife::init()
 
     SShaderDrop drops[] =
     {
-        { "perspective", "./build/assets/shaders/image-2d.vs", "./build/assets/shaders/image-2d.fs" },
+        { "perspective", "./build/assets/shaders/flat-depth.vs", "./build/assets/shaders/flat-depth.fs" },
         { "font", "./build/assets/shaders/font.vs", "./build/assets/shaders/font.fs" }
     };
 
