@@ -12,7 +12,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, see <http://www.gnu.org/licenses/>.
  *
- * Copyright (C) IOIO, 2014
+ * Copyright (C) Fitz Abucay, 2014
  */
 
 #ifndef EMPERORSYSTEM_H
