@@ -21,6 +21,8 @@
 #include "../Commons.h"
 #include "../utils/Helpers.h"
 
+#include "TextureManager.h"
+
 class CSpriteManager
 {
 public:
@@ -31,40 +33,57 @@ public:
     void destroy();
 
     void addToSpriteBank(char const *file);
-    void removeFromSpriteBank(char const *name);
 
-    void renderSprite(char const *name);
+    void renderSprite(char const *name, glm::vec2 pos);
+    void renderSprite(char const *name, unsigned int index, glm::vec2 pos);
 
 private:
+    struct SSpriteFrame
+    {
+        unsigned int id;
+
+        glm::vec2 UL;
+        glm::vec2 LR;
+
+        glm::vec2 dimension;
+        void populateDimension() { dimension = glm::vec2(LR - UL); }
+    };
+
+    struct SSprite
+    {
+        std::string name;
+        std::vector<SSpriteFrame> frames;
+    };
+
     struct SSpriteBank
     {
         std::string name;
         std::string path;
 
         unsigned int priority;
-
-        struct SSprite
-        {
-            std::string name;
-
-            struct SSpriteFrame
-            {
-                unsigned int id;
-
-                glm::vec2 UL;
-                glm::vec2 LR;
-
-                glm::vec2 dimension;
-            };
-
-            std::vector<SSpriteFrame> frames;
-        };
+        unsigned int type;
 
         std::vector<SSprite> sprites;
     };
     
     std::vector<SSpriteBank> m_vSpriteBank;
+    std::map<std::string, unsigned int> m_mSpriteMapToBank;
+
+    unsigned int m_nSpriteCount;
+    unsigned int m_nSpriteBankCount;
+
+    enum
+    {
+        VERTEX,
+        ELEMENT,
+
+        MAX
+    };
+
+    std::vector<GLuint> m_vBuffer;
+    std::vector<size_t> m_vSize;
+
+    CTextureManager *m_psTexture;
 };
 
 #endif /* end of include guard: SPRITEMANAGER_H */
-
