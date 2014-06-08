@@ -1,4 +1,4 @@
-# voc
+# vocn
 
 ```
       ___                       ___           ___     
@@ -14,7 +14,7 @@
                                \/__/         \/__/    
 ```
 
-voc is an OpenGL 3.2 and GLSL 1.5 modeled graphical rendering engine.
+vocn is an OpenGL 3.2 and GLSL 1.5 modeled graphical rendering engine.
 
 #### Dependecies:
 
